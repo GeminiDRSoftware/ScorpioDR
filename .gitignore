@@ -62,7 +62,10 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+#docs/_build/
+rtd/_build
+docs/progmanuals/OCAMDR_ProgManual/_build/
+docs/usermanuals/OCAMDR_UserManual/_build/
 
 # PyBuilder
 target/
@@ -99,3 +102,10 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# Eclipse
+.project
+
+# PyCharm
+.idea
+
