@@ -1,16 +1,11 @@
 # This parameter file contains the parameters related to the primitives
 # defined in the primitives_octocam_spect_ccd.py file.
 
-from geminidr.core.parameters_ccd import ParametersCCD
-from .parameters_octocam_spect import ParametersOCTOCAMSpect
+from gempy.library import config
+#from geminidr.core import parameters_spect, parameters_ccd # import core pkgs as needed
 
-class ParametersOCTOCAMSpectCCD(ParametersOCTOCAMSpect, ParametersCCD):
 
-    myNewPrimitive = {
-        "suffix"        : "_newPrim",
-        "param2"        : 5,
-        "param3"        : None,
-        "param4"        : True
-    }
-
-    # It is also possible to override defaults from inherited primitives.
+class myNewPrimitive(config.Config):
+    suffix = config.Field("Filename suffix", str, "_suffix")
+    param1 = config.Field("Param1", str, "default")
+    param2 = config.Field("do param2?", bool, False)

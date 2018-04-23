@@ -9,7 +9,7 @@ from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import CCD
 from .primitives_octocam import OCTOCAMSpect
-from .parameters_octocam_spect_ccd import ParametersOCTOCAMSpectCCD
+from . import parameters_octocam_spect_ccd
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ class OCTOCAMSpectCCD(OCTOCAMSpect, CCD):
     def __init__(self, adinputs, **kwargs):
         super(OCTOCAMSpectCCD, self).__init__(adinputs, **kwargs)
         self.inst_lookups = 'octocamdr.octocam.lookups'
-        self.parameters = ParametersOCTOCAMSpectCCD
+        self._param_update(parameters_octocam_spect_ccd)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """

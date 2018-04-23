@@ -1,16 +1,12 @@
 # This parameter file contains the parameters related to the primitives
 # defined in the primitives_octocam_image_nearIR.py file.
 
-from geminidr.core.parameters_nearIR import ParametersNearIR
-from .parameters_octocam_image import ParametersOCTOCAMImage
+from gempy.library import config
+#from geminidr.core import parameters_nearIR # import core pkgs as needed
 
-class ParametersOCTOCAMImageNearIR(ParametersOCTOCAMImage, ParametersNearIR):
 
-    myNewPrimitive = {
-        "suffix"        : "_newPrim",
-        "param2"        : 5,
-        "param3"        : None,
-        "param4"        : True
-    }
+class myNewPrimitive(config.Config):
+    suffix = config.Field("Filename suffix", str, "_suffix")
+    param1 = config.Field("Param1", str, "default")
+    param2 = config.Field("do param2?", bool, False)
 
-    # It is also possible to override defaults from inherited primitives.

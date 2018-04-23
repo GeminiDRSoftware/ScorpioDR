@@ -108,4 +108,5 @@ ENV/
 
 # PyCharm
 .idea
+.pycharm-bash
 

@@ -6,7 +6,7 @@
 
 from geminidr.gemini.primitives_gemini import Gemini
 
-from .parameters_octocam import ParametersOCTOCAM
+from . import parameters_octocam
 
 from .lookups import timestamp_keywords as octocam_stamps
 
@@ -26,6 +26,6 @@ class OCTOCAM(Gemini):
 
     def __init__(self, adinputs, **kwargs):
         super(OCTOCAM, self).__init__(adinputs, **kwargs)
-        self.parameters = ParametersOCTOCAM
+        self._param_update(parameters_octocam)
         # Add OCTOCAM-specific timestamp keywords
         self.timestamp_keys.update(octocam_stamps.timestamp_keys)

@@ -1,10 +1,15 @@
 # This parameter file contains the parameters related to the primitives
 # defined in the primitives_octocam_image.py file.
 
-from geminidr.core.parameters_image import ParametersImage
-from geminidr.core.parameters_photometry import ParametersPhotometry
-from .parameters_octocam import ParametersOCTOCAM
+from gempy.library import config
+from geminidr.core import parameters_standardize
 
-class ParametersOCTOCAMImage(ParametersOCTOCAM,
-                             ParametersImage, ParametersPhotometry):
-    pass
+class standardizeStructureConfig(parameters_standardize.standardizeStructureConfig):
+    def setDefaults(self):
+        self.attach_mdf = False
+
+class myNewPrimitive(config.Config):
+    suffix = config.Field("Filename suffix", str, "_suffix")
+    param1 = config.Field("Param1", str, "default")
+    param2 = config.Field("do param2?", bool, False)
+

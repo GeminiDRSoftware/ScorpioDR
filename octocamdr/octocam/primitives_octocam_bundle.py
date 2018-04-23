@@ -3,7 +3,7 @@
 #                                                  primitives_octocam_bundle.py
 # ------------------------------------------------------------------------------
 from .primitives_octocam import OCTOCAM
-from .parameters_octocam_bundle import ParametersOCTOCAMBundle
+from . import parameters_octocam_bundle
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -18,6 +18,6 @@ class OCTOCAMBundle(OCTOCAM):
 
     def __init__(self, adinputs, **kwargs):
         super(OCTOCAMBundle, self).__init__(adinputs, **kwargs)
-        self.parameters = ParametersOCTOCAMBundle
+        self._param_update(parameters_octocam_bundle)
 
     # The channel splitting primitive should go here

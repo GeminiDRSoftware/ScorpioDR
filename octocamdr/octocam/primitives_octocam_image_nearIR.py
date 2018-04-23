@@ -9,7 +9,7 @@ from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import NearIR
 from .primitives_octocam_image import OCTOCAMImage
-from .parameters_octocam_image_nearIR import ParametersOCTOCAMImageNearIR
+from . import parameters_octocam_image_nearIR
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -26,7 +26,7 @@ class OCTOCAMImageNearIR(OCTOCAMImage, NearIR):
     def __init__(self, adinputs, **kwargs):
         super(OCTOCAMImageNearIR, self).__init__(adinputs, **kwargs)
         self.inst_lookups = 'octocamdr.octocam.lookups'
-        self.parameters = ParametersOCTOCAMImageNearIR
+        self._param_update(parameters_octocam_image_nearIR)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """
