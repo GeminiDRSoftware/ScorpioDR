@@ -1,16 +1,16 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'IMAGE', 'CAL', 'FLAT', 'CCD']
+Recipes available to data with tags ['Scorpio', 'SPECT', 'CAL', 'FLAT', 'CCD']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['OCTOCAM', 'IMAGE', 'CAL', 'FLAT', 'CCD'])
+recipe_tags = set(['Scorpio', 'SPECT', 'CAL', 'FLAT', 'CCD'])
 
 def makeProcessedFlat(p):
     """
-    This recipe performs the standardization and corrections needed to
-    convert the raw input flat images into a single stacked and normalized
-    flat image.  This output processed flat is stored on disk using
-    storeProcessedFlat and has a name equal to the name of the first input
-    flat image with "_flat.fits" appended.
+    This recipe performs the standardization and corrections needed to convert
+    the raw input spectral flat into a single stacked and normalized flat.
+    This output processed flat is stored on disk using storeProcessedFlat and
+    has a name equal to the name of the first input flat image with "_flat.fits"
+    appended.
 
     Parameters
     ----------

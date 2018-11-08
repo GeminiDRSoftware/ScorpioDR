@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'IMAGE', 'CAL', 'FLAT', 'NIR']
+Recipes available to data with tags ['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'NIR']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['OCTOCAM', 'IMAGE', 'CAL', 'FLAT', 'NIR'])
+recipe_tags = set(['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'NIR'])
 
 def makeProcessedFlat(p):
     """

@@ -3,5 +3,5 @@
 
 import astrodata
 
-from . import octocam
+from . import scorpio
 

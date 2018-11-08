@@ -1,9 +1,9 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'CAL', 'DARK', 'NIR'].
+Recipes available to data with tags ['Scorpio', 'CAL', 'DARK', 'NIR'].
 
 Default recipe is set to "makeProcessedDark".
 """
-recipe_tags = set(['GHOST', 'CAL', 'DARK', 'NIR'])
+recipe_tags = set(['Scorpio', 'CAL', 'DARK', 'NIR'])
 
 
 def makeProcessedDark(p):

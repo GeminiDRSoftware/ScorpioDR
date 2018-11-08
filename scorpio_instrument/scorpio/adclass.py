@@ -1,10 +1,10 @@
 
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
-from gemini_instruments.common import Sextion
+from gemini_instruments.common import Section
 from gemini_instruments.gemini import AstroDataGemini
 
-class AstroDataOctocam(AstroDataGemini):
+class AstroDataScorpio(AstroDataGemini):
 
     # single keyword mapping. add only the ones that are different
     # from what's already defined in AstroDataGemini.
@@ -13,14 +13,14 @@ class AstroDataOctocam(AstroDataGemini):
 
     @staticmethod
     def _matches_data(source):
-        return source[0].header.get('INSTRUME', '').upper() == 'OCTOCAM'
+        return source[0].header.get('INSTRUME', '').upper() == 'Scorpio'
 
     # ---------------
     # Tag definitions
     #----------------
     @astro_data_tag
     def _tag_instrument(self):
-        return TagSet(['OCTOCAM'])
+        return TagSet(['Scorpio'])
 
     @astro_data_tag
     def _tag_dark(self):
@@ -37,7 +37,7 @@ class AstroDataOctocam(AstroDataGemini):
         if self.phu.get('OBSTYPE') == 'BIAS':
             return TagSet(['BIAS', 'CAL'], blocks=['IMAGE', 'SPECT'])
 
-    # More tags needs to be added by the OCTOCAM DR team
+    # More tags needs to be added by the Scorpio DR team
     # At this time, Gemini DR expects the following tags to be implemented.
     #    IMAGING, LS (for longslit), BUNDLE, FLAT, TWILIGHT, GCALFLAT.
     #    All type of flats must also be CAL and FLAT.
@@ -76,7 +76,7 @@ class AstroDataOctocam(AstroDataGemini):
         """
         return self._parse_section('BIASSEC', pretty)
 
-    # Obviously if BIASSEC is not the keyword used for OCTOCAM change that
+    # Obviously if BIASSEC is not the keyword used for Scorpio change that
     # in the example above.
 
     # For a list of the expected descriptors see the appendix in the

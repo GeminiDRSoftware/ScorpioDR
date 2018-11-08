@@ -1,9 +1,9 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'IMAGE', 'CCD'].
+Recipes available to data with tags ['Scorpio', 'IMAGE', 'CCD'].
 
 Default is "reduce".
 """
-recipe_tags = set(['OCTOCAM', 'IMAGE', 'CCD'])
+recipe_tags = set(['Scorpio', 'IMAGE', 'CCD'])
 
 def reduce(p):
     """

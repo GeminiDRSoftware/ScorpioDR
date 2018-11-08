@@ -1,12 +1,12 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'SPECT', 'CCD'].
+Recipes available to data with tags ['Scorpio', 'SPECT', 'NIR'].
 Default is "reduce".
 """
-recipe_tags = set(['OCTOCAM', 'SPECT', 'CCD'])
+recipe_tags = set(['Scorpio', 'SPECT', 'NIR'])
 
 def reduce(p):
     """
-    This recipe process optical spectrum up to and including alignment and
+    This recipe process near-IR spectrum up to and including alignment and
     stacking.  A single stacked extracted and calibrated spectrum is produced.
 
 
@@ -18,11 +18,10 @@ def reduce(p):
 
     p.prepare()
     p.addDQ()
-    p.addVAR(read_noise=True)
-    p.overscanCorrect()
-    p.biasCorrect()
     p.ADUToElectrons()
-    p.addVAR(poisson_noise=True)
+    p.addVAR(read_noise=True, poisson_noise=True)
+    p.nonlinearityCorrect()
+    p.darkCorrect()
     p.flatCorrect()
     # whatever else is needed.
     # ...

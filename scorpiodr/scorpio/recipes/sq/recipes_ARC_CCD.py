@@ -1,9 +1,9 @@
 """
-Recipes available to data with tags ['OCTOCAM', 'CAL', 'ARC', 'NIR'].
+Recipes available to data with tags ['Scorpio', 'CAL', 'ARC', 'CCD'].
 
 Default recipe is set to "makeProcessedArc".
 """
-recipe_tags = set(['GHOST', 'CAL', 'ARC', 'NIR'])
+recipe_tags = set(['Scorpio', 'CAL', 'ARC', 'CCD'])
 
 def makeProcessedArc(p):
     """
@@ -22,7 +22,8 @@ def makeProcessedArc(p):
     p.prepare()
     p.addDQ()
     p.addVAR(read_noise=True)
-    p.nonlinearityCorrect()
+    p.overscanCorrect()
+    p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
     # whatever is needed
@@ -32,4 +33,4 @@ def makeProcessedArc(p):
     p.storeProcessedArc()
     return
 
-default = makeProcessedDark
+default = makeProcessedArc

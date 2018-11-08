@@ -1,2 +1,2 @@
-# OCAMDR
-OCTOCAM data reduction software development tree.
+# ScorpioDR
+Scorpio data reduction software development tree.
