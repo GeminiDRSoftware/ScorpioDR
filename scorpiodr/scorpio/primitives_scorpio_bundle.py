@@ -21,3 +21,4 @@ class OCTOCAMBundle(OCTOCAM):
         self._param_update(parameters_octocam_bundle)
 
     # The channel splitting primitive should go here
+    # def separateChannels()

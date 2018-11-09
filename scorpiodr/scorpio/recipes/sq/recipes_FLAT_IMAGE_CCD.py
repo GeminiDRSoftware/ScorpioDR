@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'CCD']
+Recipes available to data with tags ['SCORPIO', 'IMAGE', 'CAL', 'FLAT', 'CCD']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'CCD'])
+recipe_tags = set(['SCORPIO', 'IMAGE', 'CAL', 'FLAT', 'CCD'])
 
 def makeProcessedFlat(p):
     """
@@ -21,12 +21,11 @@ def makeProcessedFlat(p):
     p.prepare()
     p.addDQ()
     p.addVAR(read_noise=True)
-    p.display()
     p.overscanCorrect()
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
-    p.stackFlats()
+    p.stackFrames()
     p.normalizeFlat()
     p.storeProcessedFlat()
     return

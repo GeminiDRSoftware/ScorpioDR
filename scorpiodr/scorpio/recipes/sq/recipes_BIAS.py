@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['Scorpio', 'CAL', 'BIAS'].
+Recipes available to data with tags ['SCORPIO', 'CAL', 'BIAS'].
 Default is "makeProcessedBias".
 """
-recipe_tags = set(['Scorpio', 'CAL', 'BIAS'])
+recipe_tags = set(['SCORPIO', 'CAL', 'BIAS'])
 
 def makeProcessedBias(p):
     """

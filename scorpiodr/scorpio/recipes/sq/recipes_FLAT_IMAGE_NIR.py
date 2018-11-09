@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'NIR']
+Recipes available to data with tags ['SCORPIO', 'IMAGE', 'CAL', 'FLAT', 'NIR']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['Scorpio', 'IMAGE', 'CAL', 'FLAT', 'NIR'])
+recipe_tags = set(['SCORPIO', 'IMAGE', 'CAL', 'FLAT', 'NIR'])
 
 def makeProcessedFlat(p):
     """
@@ -20,10 +20,9 @@ def makeProcessedFlat(p):
 
     p.prepare()
     p.addDQ()
-    p.addVAR(read_noise=True)
-    p.nonlinearityCorrect()
     p.ADUToElectrons()
-    p.addVAR(poisson_noise=True)
+    p.nonlinearityCorrect()
+    p.addVAR(read_noise=True, poisson_noise=True)
     p.makeLampFlat()
     p.normalizeFlat()
     p.thresholdFlatfield()
@@ -32,3 +31,21 @@ def makeProcessedFlat(p):
 
 
 default = makeProcessedFlat
+
+
+def makeProcessedBPM(p):
+    """
+    This recipe requires flats and *short* darks, not darks that match
+    the exptime of the flats.
+    """
+
+    p.prepare()
+    p.ADUToElectrons()
+    p.selectFromInputs(tags="DARK", outstream="darks")
+    p.selectFromInputs(tags="FLAT")
+    p.stackFrames(stream="darks")
+    p.makeLampFlat()
+    p.normalizeFlat()
+    p.makeBPM()
+    #p.storeBPM()
+    return

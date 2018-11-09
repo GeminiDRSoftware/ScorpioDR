@@ -13,14 +13,14 @@ class AstroDataScorpio(AstroDataGemini):
 
     @staticmethod
     def _matches_data(source):
-        return source[0].header.get('INSTRUME', '').upper() == 'Scorpio'
+        return source[0].header.get('INSTRUME', '').upper() == 'SCORPIO'
 
     # ---------------
     # Tag definitions
     #----------------
     @astro_data_tag
     def _tag_instrument(self):
-        return TagSet(['Scorpio'])
+        return TagSet(['SCORPIO'])
 
     @astro_data_tag
     def _tag_dark(self):

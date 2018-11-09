@@ -1,9 +1,9 @@
 """
-Recipes available to data with tags ['Scorpio', 'CAL', 'DARK', 'NIR'].
+Recipes available to data with tags ['SCORPIO', 'CAL', 'DARK', 'NIR'].
 
 Default recipe is set to "makeProcessedDark".
 """
-recipe_tags = set(['Scorpio', 'CAL', 'DARK', 'NIR'])
+recipe_tags = set(['SCORPIO', 'CAL', 'DARK', 'NIR'])
 
 
 def makeProcessedDark(p):
@@ -21,10 +21,9 @@ def makeProcessedDark(p):
 
     p.prepare()
     p.addDQ()
-    p.addVAR(read_noise=True)
-    p.nonlinearityCorrect()
     p.ADUToElectrons()
-    p.addVAR(poisson_noise=True)
+    p.nonlinearityCorrect()
+    p.addVAR(read_noise=True, poisson_noise=True)
     p.stackFrames()
     p.storeProcessedDark()
     return

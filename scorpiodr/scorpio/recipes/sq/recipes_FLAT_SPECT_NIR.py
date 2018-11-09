@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['Scorpio', 'SPECT', 'CAL', 'FLAT', 'NIR']
+Recipes available to data with tags ['SCORPIO', 'SPECT', 'CAL', 'FLAT', 'NIR']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['Scorpio', 'SPECT', 'CAL', 'FLAT', 'NIR'])
+recipe_tags = set(['SCORPIO', 'SPECT', 'CAL', 'FLAT', 'NIR'])
 
 def makeProcessedFlat(p):
     """
@@ -20,10 +20,12 @@ def makeProcessedFlat(p):
 
     p.prepare()
     p.addDQ()
-    p.addVAR(read_noise=True)
-    p.nonlinearityCorrect()
     p.ADUToElectrons()
-    p.addVAR(poisson_noise=True)
+    p.nonlinearityCorrect()
+    p.addVAR(read_noise=True, poisson_noise=True)
+
+    # Do we need QE for near-IR?
+
     p.makeLampFlat()
     p.normalizeFlat()
     p.thresholdFlatfield()

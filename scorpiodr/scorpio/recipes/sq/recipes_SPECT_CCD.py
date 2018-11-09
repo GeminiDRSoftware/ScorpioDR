@@ -1,8 +1,8 @@
 """
-Recipes available to data with tags ['Scorpio', 'SPECT', 'CCD'].
+Recipes available to data with tags ['SCORPIO', 'SPECT', 'CCD'].
 Default is "reduce".
 """
-recipe_tags = set(['Scorpio', 'SPECT', 'CCD'])
+recipe_tags = set(['SCORPIO', 'SPECT', 'CCD'])
 
 def reduce(p):
     """
@@ -23,9 +23,17 @@ def reduce(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
+    p.darkCorrect()
+    p.scatteredLightCorrect()
+    #p.applyWavelengthSolution()
+    p.QECorrect()
     p.flatCorrect()
-    # whatever else is needed.
-    # ...
+    p.rejectCosmicRays()
+    p.applyWavelengthSolution()  # transform
+    p.skyCorrect()
+    p.fluxCalibrate()
+    p.stackSpectra()
+    p.extractSpectrum()
     return
 
 default = reduce
