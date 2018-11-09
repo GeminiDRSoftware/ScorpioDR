@@ -1,5 +1,5 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_octocam.py file.
+# defined in the primitives_scorpio.py file.
 
 from gempy.library import config
 from geminidr.core import parameters_standardize

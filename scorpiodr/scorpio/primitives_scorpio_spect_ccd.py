@@ -1,32 +1,32 @@
 #
 #                                                                       DRAGONS
 #
-#                                               primitives_octocam_spect_ccd.py
+#                                               primitives_scorpio_spect_ccd.py
 # ------------------------------------------------------------------------------
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import CCD
-from .primitives_octocam import OCTOCAMSpect
-from . import parameters_octocam_spect_ccd
+from .primitives_scorpio import ScorpioSpect
+from . import parameters_scorpio_spect_ccd
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class OCTOCAMSpectCCD(OCTOCAMSpect, CCD):
+class ScorpioSpectCCD(ScorpioSpect, CCD):
     """
-    This class contains primitives that applies to all OCTOCAM optical
+    This class contains primitives that applies to all Scorpio optical
     spectroscopy data.
     """
 
-    tagset = set(['GEMINI', 'OCTOCAM', 'SPECT', 'CCD'])
+    tagset = set(['GEMINI', 'SCORPIO', 'SPECT', 'CCD'])
 
     def __init__(self, adinputs, **kwargs):
-        super(OCTOCAMSpectCCD, self).__init__(adinputs, **kwargs)
-        self.inst_lookups = 'octocamdr.octocam.lookups'
-        self._param_update(parameters_octocam_spect_ccd)
+        super(ScorpioSpectCCD, self).__init__(adinputs, **kwargs)
+        self.inst_lookups = 'scorpiodr.scorpio.lookups'
+        self._param_update(parameters_scorpio_spect_ccd)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """

@@ -1,32 +1,32 @@
 #
 #                                                                       DRAGONS
 #
-#                                                   primitives_octocam_image.py
+#                                                   primitives_scorpio_image.py
 # ------------------------------------------------------------------------------
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import Image, Photometry
-from .primitives_octocam import OCTOCAM
-from . import parameters_octocam_image
+from .primitives_scorpio import Scorpio
+from . import parameters_scorpio_image
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class OCTOCAMImage(OCTOCAM, Image, Photometry):
+class ScorpioImage(Scorpio, Image, Photometry):
     """
-    This class contains primitives that applies to all OCTOCAM imaging
+    This class contains primitives that applies to all Scorpio imaging
     data.
     """
 
-    tagset = set(['GEMINI', 'OCTOCAM', 'IMAGE'])
+    tagset = set(['GEMINI', 'SCORPIO', 'IMAGE'])
 
     def __init__(self, adinputs, **kwargs):
-        super(OCTOCAMImage, self).__init__(adinputs, **kwargs)
+        super(ScorpioImage, self).__init__(adinputs, **kwargs)
         self.inst_lookups = 'octocamdr.octocam.lookups'
-        self._param_update(parameters_octocam_image)
+        self._param_update(parameters_scorpio_image)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """

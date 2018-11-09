@@ -1,5 +1,5 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_octocam_bundle.py file.
+# defined in the primitives_scorpio_bundle.py file.
 
 from gempy.library import config
 

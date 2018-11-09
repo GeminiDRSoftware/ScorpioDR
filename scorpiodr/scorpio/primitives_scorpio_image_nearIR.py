@@ -1,32 +1,32 @@
 #
 #                                                                       DRAGONS
 #
-#                                            primitives_octocam_image_nearIR.py
+#                                            primitives_scorpio_image_nearIR.py
 # ------------------------------------------------------------------------------
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import NearIR
-from .primitives_octocam_image import OCTOCAMImage
-from . import parameters_octocam_image_nearIR
+from .primitives_scorpio_image import ScorpioImage
+from . import parameters_scorpio_image_nearIR
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class OCTOCAMImageNearIR(OCTOCAMImage, NearIR):
+class ScorpioImageNearIR(ScorpioImage, NearIR):
     """
-    This class contains primitives that applies to all OCTOCAM near-IR
+    This class contains primitives that applies to all Scorpio near-IR
     imaging data.
     """
 
-    tagset = set(['GEMINI', 'OCTOCAM', 'IMAGE', 'NIR'])
+    tagset = set(['GEMINI', 'SCORPIO', 'IMAGE', 'NIR'])
 
     def __init__(self, adinputs, **kwargs):
-        super(OCTOCAMImageNearIR, self).__init__(adinputs, **kwargs)
-        self.inst_lookups = 'octocamdr.octocam.lookups'
-        self._param_update(parameters_octocam_image_nearIR)
+        super(ScorpioImageNearIR, self).__init__(adinputs, **kwargs)
+        self.inst_lookups = 'scorpiodr.scorpio.lookups'
+        self._param_update(parameters_scorpio_image_nearIR)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """
