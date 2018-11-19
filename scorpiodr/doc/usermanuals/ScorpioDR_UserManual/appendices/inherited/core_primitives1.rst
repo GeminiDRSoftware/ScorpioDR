@@ -1,0 +1,1 @@
+../../../GeminiDR_UserManual/appendices/core_bookkeeping/primitive1.rst
