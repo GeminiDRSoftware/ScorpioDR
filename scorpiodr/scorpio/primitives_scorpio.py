@@ -29,3 +29,11 @@ class Scorpio(Gemini):
         self._param_update(parameters_octocam)
         # Add Scorpio-specific timestamp keywords
         self.timestamp_keys.update(octocam_stamps.timestamp_keys)
+
+    @staticmethod
+    def _has_valid_extensions(ad):
+        """ Check that the AD has a valid number of extensions. """
+
+        # this needs to be verified. This would be for the debundled data
+        # and inherited and used by the ScorpioImage and ScorpioSpect class.
+        return len(ad) in [1]
