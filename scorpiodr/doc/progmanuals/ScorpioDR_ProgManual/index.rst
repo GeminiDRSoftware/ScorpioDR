@@ -2,8 +2,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-GMOS Data Reduction Programmer Manual
-============================================
+Scorpio Data Reduction Programmer Manual
+========================================
 
 .. admonition:: Document ID
 
