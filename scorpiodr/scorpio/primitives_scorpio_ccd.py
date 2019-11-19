@@ -1,32 +1,32 @@
 #
 #                                                                       DRAGONS
 #
-#                                               primitives_scorpio_spect_ccd.py
+#                                               primitives_scorpio_image_ccd.py
 # ------------------------------------------------------------------------------
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
 from geminidr.core import CCD
-from .primitives_scorpio import ScorpioSpect
-from . import parameters_scorpio_spect_ccd
+from .primitives_scorpio import Scorpio
+from . import parameters_scorpio_ccd
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioSpectCCD(ScorpioSpect, CCD):
+class ScorpioCCD(Scorpio, CCD):
     """
     This class contains primitives that applies to all Scorpio optical
-    spectroscopy data.
+    imaging data.
     """
 
-    tagset = set(['GEMINI', 'SCORPIO', 'SPECT', 'CCD'])
+    tagset = set(['GEMINI', 'SCORPIO', 'CCD'])
 
     def __init__(self, adinputs, **kwargs):
-        super(ScorpioSpectCCD, self).__init__(adinputs, **kwargs)
+        super(ScorpioCCD, self).__init__(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
-        self._param_update(parameters_scorpio_spect_ccd)
+        self._param_update(parameters_scorpio_ccd)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """

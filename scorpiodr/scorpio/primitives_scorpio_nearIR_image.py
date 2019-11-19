@@ -1,32 +1,32 @@
 #
 #                                                                       DRAGONS
 #
-#                                                   primitives_scorpio_spect.py
+#                                            primitives_scorpio_image_nearIR.py
 # ------------------------------------------------------------------------------
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
-from geminidr.core import Spect
-from .primitives_scorpio import Scorpio
-from . import parameters_scorpio_spect
+from geminidr.core import Image
+from .primitives_scorpio_nearIR import ScorpioNearIR
+from . import parameters_scorpio_nearIR_image
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioSpect(Scorpio, Spect):
+class ScorpioNearIRImage(ScorpioNearIR, Image):
     """
-    This class contains primitives that applies to all Scorpio spectroscopy
-    data.
+    This class contains primitives that applies to all Scorpio near-IR
+    imaging data.
     """
 
-    tagset = set(['GEMINI', 'SCORPIO', 'SPECT'])
+    tagset = set(['GEMINI', 'SCORPIO', 'IMAGE', 'NIR'])
 
     def __init__(self, adinputs, **kwargs):
-        super(ScorpioSpect, self).__init__(adinputs, **kwargs)
+        super(ScorpioNearIRImage, self).__init__(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
-        self._param_update = parameters_scorpio_spect
+        self._param_update(parameters_scorpio_nearIR_image)
 
     def myNewPrimitive(self, adinputs=None, **params):
         """

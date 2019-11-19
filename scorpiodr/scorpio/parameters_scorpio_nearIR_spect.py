@@ -1,5 +1,5 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_scorpio_spect_nearIR.py file.
+# defined in the primitives_scorpio_nearIR_spect.py file.
 
 from gempy.library import config
 #from geminidr.core import parameters_spect, parameters_nearIR # import core pkgs as needed

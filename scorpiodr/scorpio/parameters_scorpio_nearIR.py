@@ -1,13 +1,13 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_scorpio_ccd_image.py file.
+# defined in the primitives_scorpio_nearIR.py file.
 
 from gempy.library import config
-from geminidr.gemini import parameters_qa
+from geminidr.core import parameters_standardize
 #from geminidr.core import parameters_ccd  # import core pkgs as needed.
 
-class measureIQConfig(parameters_qa.measureIQConfig):
-    remove_bias = config.Field("Remove estimated bias level before displaying?",
-                               bool, True)
+class standardizeStructureConfig(parameters_standardize.standardizeStructureConfig):
+    def setDefaults(self):
+        self.attach_mdf = False
 
 class myNewPrimitive(config.Config):
     suffix = config.Field("Filename suffix", str, "_suffix")

@@ -1,8 +1,9 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_scorpio_image.py file.
+# defined in the primitives_scorpio_ccd.py file.
 
 from gempy.library import config
 from geminidr.core import parameters_standardize
+#from geminidr.core import parameters_ccd  # import core pkgs as needed.
 
 class standardizeStructureConfig(parameters_standardize.standardizeStructureConfig):
     def setDefaults(self):

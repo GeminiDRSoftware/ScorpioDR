@@ -1,5 +1,5 @@
 # This parameter file contains the parameters related to the primitives
-# defined in the primitives_scorpio_spect_ccd.py file.
+# defined in the primitives_scorpio_ccd_spect.py file.
 
 from gempy.library import config
 #from geminidr.core import parameters_spect, parameters_ccd # import core pkgs as needed
