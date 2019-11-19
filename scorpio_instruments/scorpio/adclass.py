@@ -35,7 +35,7 @@ class AstroDataScorpio(AstroDataGemini):
     @astro_data_tag
     def _tag_bias(self):
         if self.phu.get('OBSTYPE') == 'BIAS':
-            return TagSet(['BIAS', 'CAL'], blocks=['IMAGE', 'SPECT'])
+            return TagSet(['BIAS', 'CAL', 'CCD'], blocks=['IMAGE', 'SPECT'])
 
     # More tags needs to be added by the Scorpio DR team
     # At this time, Gemini DR expects the following tags to be implemented.
