@@ -3,7 +3,7 @@
 #                                                  primitives_scorpio_bundle.py
 # ------------------------------------------------------------------------------
 from .primitives_scorpio import Scorpio
-from . import parameters_octocam_bundle
+from . import parameters_scorpio_bundle
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -18,7 +18,7 @@ class ScorpioBundle(Scorpio):
 
     def __init__(self, adinputs, **kwargs):
         super(ScorpioBundle, self).__init__(adinputs, **kwargs)
-        self._param_update(parameters_octocam_bundle)
+        self._param_update(parameters_scorpio_bundle)
 
     @staticmethod
     def _has_valid_extensions(ad):

@@ -8,7 +8,7 @@ from geminidr.gemini.primitives_gemini import Gemini
 
 from . import parameters_scorpio
 
-from .lookups import timestamp_keywords as octocam_stamps
+from .lookups import timestamp_keywords as scorpio_stamps
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -26,9 +26,9 @@ class Scorpio(Gemini):
 
     def __init__(self, adinputs, **kwargs):
         super(Scorpio, self).__init__(adinputs, **kwargs)
-        self._param_update(parameters_octocam)
+        self._param_update(parameters_scorpio)
         # Add Scorpio-specific timestamp keywords
-        self.timestamp_keys.update(octocam_stamps.timestamp_keys)
+        self.timestamp_keys.update(scorpio_stamps.timestamp_keys)
 
     @staticmethod
     def _has_valid_extensions(ad):

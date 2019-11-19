@@ -25,7 +25,7 @@ class ScorpioImage(Scorpio, Image, Photometry):
 
     def __init__(self, adinputs, **kwargs):
         super(ScorpioImage, self).__init__(adinputs, **kwargs)
-        self.inst_lookups = 'octocamdr.octocam.lookups'
+        self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_image)
 
     def myNewPrimitive(self, adinputs=None, **params):

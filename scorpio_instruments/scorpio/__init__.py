@@ -1,7 +1,7 @@
 __all__ = ['AstroDataScorpio']
 
 from astrodata import factory
-from gemini_instruments import addInstrumentFilterWavelengths
+from gemini_instruments.gemini import addInstrumentFilterWavelengths
 from .adclass import AstroDataScorpio
 from .lookup import filter_wavelengths
 
