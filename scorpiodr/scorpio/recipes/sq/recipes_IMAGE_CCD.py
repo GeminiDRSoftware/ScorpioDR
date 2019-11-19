@@ -33,7 +33,7 @@ def reduce(p):
     p.fluxCalibrate()  # magic to find calibrator.  adds a zeropoint.
     return
 
-default = reduce
+_default = reduce
 
 
 def makeProcessedFringe(p):

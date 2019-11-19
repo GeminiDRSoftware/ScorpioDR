@@ -30,7 +30,7 @@ def reduce(p):
     p.telluricCorrect()
     return
 
-default = reduce
+_default = reduce
 
 
 # are the tellurics identified as CAL?  If so, move to its own recipe file.

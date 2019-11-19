@@ -30,7 +30,7 @@ def makeProcessedFlat(p):
     return
 
 
-default = makeProcessedFlat
+_default = makeProcessedFlat
 
 
 def makeProcessedBPM(p):

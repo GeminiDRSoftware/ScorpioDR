@@ -34,4 +34,4 @@ def makeProcessedArc(p):
     p.storeProcessedArc()
     return
 
-default = makeProcessedArc
+_default = makeProcessedArc

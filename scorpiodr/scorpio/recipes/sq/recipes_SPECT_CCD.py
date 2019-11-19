@@ -36,4 +36,4 @@ def reduce(p):
     p.extractSpectrum()
     return
 
-default = reduce
+_default = reduce
