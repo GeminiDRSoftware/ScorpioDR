@@ -19,7 +19,7 @@ def makeProcessedBias(p):
 
     p.prepare()
     p.addDQ()
-    #p.addVAR(read_noise=True)
+    p.addVAR(read_noise=True)
     p.overscanCorrect()
     p.stackFrames()
     p.storeProcessedBias()
