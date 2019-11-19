@@ -2,10 +2,10 @@
 # defined in the primitives_scorpio_nearIR.py file.
 
 from gempy.library import config
-from geminidr.core import parameters_standardize
+from geminidr.gemini import parameters_gemini
 #from geminidr.core import parameters_ccd  # import core pkgs as needed.
 
-class standardizeStructureConfig(parameters_standardize.standardizeStructureConfig):
+class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
         self.attach_mdf = False
 
