@@ -6,7 +6,7 @@ recipe_tags = set(['SCORPIO', 'SPECT', 'NIR'])
 
 def reduce(p):
     """
-    This recipe process near-IR spectrum up to and including alignment and
+    This recipe process optical spectrum up to and including alignment and
     stacking.  A single stacked extracted and calibrated spectrum is produced.
 
 
@@ -19,15 +19,23 @@ def reduce(p):
     p.prepare()
     p.addDQ()
     p.ADUToElectrons()
-    p.nonlinearityCorrect()
     p.addVAR(read_noise=True, poisson_noise=True)
+    p.nonlinearityCorrect()
     p.darkCorrect()
+    #p.applyWavelengthSolution()    # depends on Gemini's algorithm.
+    #p.QECorrect()                  # depends on Gemini's algorithm.
     p.flatCorrect()
-    p.skyCorrect()  # ABBA etc, sky substraction
-    p.stackSpectra()  # spatial shift of B to A, and stack.
-    p.applyWavelengthSolution()  # transform, how about s-distortion?
-    p.extractSpectrum()
+    p.separateSky()
+    p.associateSky()
+    p.skyCorrect()
+    p.distortionCorrect()
+    p.findSourceApertures()
+    p.traceApertures()
+    p.extract1DSpectra()
+    p.linearizeSpectra()
     p.telluricCorrect()
+    p.stackSpectra()
+    p.writeOutputs()
     return
 
 _default = reduce
@@ -39,12 +47,20 @@ def reduceTelluric(p):
     p.prepare()
     p.addDQ()
     p.ADUToElectrons()
-    p.nonlinearityCorrect()
     p.addVAR(read_noise=True, poisson_noise=True)
+    p.nonlinearityCorrect()
     p.darkCorrect()
+    # p.applyWavelengthSolution()    # depends on Gemini's algorithm.
+    # p.QECorrect()                  # depends on Gemini's algorithm.
     p.flatCorrect()
-    p.skyCorrect()  # ABBA etc, sky substraction
-    p.stackSpectra()  # spatial shift of B to A, and stack.
-    p.applyWavelengthSolution()  # transform, how about s-distortion?
-    p.extractSpectrum()
+    p.separateSky()
+    p.associateSky()
+    p.skyCorrect()
+    p.distortionCorrect()
+    p.findSourceApertures()
+    p.traceApertures()
+    p.extract1DSpectra()
+    p.linearizeSpectra()
+    p.stackSpectra()
+    p.writeOutputs()
     return

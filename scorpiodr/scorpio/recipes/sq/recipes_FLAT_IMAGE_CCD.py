@@ -25,7 +25,7 @@ def makeProcessedFlat(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
-    p.stackFrames()
+    p.stackFlats()
     p.normalizeFlat()
     p.storeProcessedFlat()
     return

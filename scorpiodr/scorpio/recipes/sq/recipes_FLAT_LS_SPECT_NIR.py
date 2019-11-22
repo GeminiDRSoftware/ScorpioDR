@@ -21,10 +21,12 @@ def makeProcessedFlat(p):
     p.prepare()
     p.addDQ()
     p.ADUToElectrons()
-    p.nonlinearityCorrect()
     p.addVAR(read_noise=True, poisson_noise=True)
+    p.nonlinearityCorrect()
 
     # Do we need QE for near-IR?
+
+    # Gemini doesn't have a NearIR example for spectro flat recipe yet.
 
     p.makeLampFlat()
     p.normalizeFlat()

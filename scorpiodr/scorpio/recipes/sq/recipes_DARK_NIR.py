@@ -21,10 +21,12 @@ def makeProcessedDark(p):
 
     p.prepare()
     p.addDQ()
+    p.addVAR(read_noise=True)
+    p.nonlinearityCorrect()
     p.ADUToElectrons()
     p.nonlinearityCorrect()
-    p.addVAR(read_noise=True, poisson_noise=True)
-    p.stackFrames()
+    p.addVAR(poisson_noise=True)
+    p.stackDarks()
     p.storeProcessedDark()
     return
 

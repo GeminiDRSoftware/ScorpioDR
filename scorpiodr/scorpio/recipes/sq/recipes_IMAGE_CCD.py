@@ -25,12 +25,14 @@ def reduce(p):
     p.addVAR(poisson_noise=True)
     p.darkCorrect()   # TBD if truly needed
     p.flatCorrect()
-    p.makeFringe()
     p.fringeCorrect()
     p.detectSources()
-    p.alignAndStack()
-    #p.detectSources()  # might be good to create the catalog from the stack.
-    p.fluxCalibrate()  # magic to find calibrator.  adds a zeropoint.
+    p.adjustWCSToReference()
+    p.resampleToCommonFrame()
+    p.flagCosmicRaysByStacking()
+    p.stackFrames(zero=True)  # TBD if zero=True or other setting needed.
+    #p.detectSources()
+    #p.fluxCalibrate()  # adds a zeropoint.  use calibrator or catalog.
     return
 
 _default = reduce

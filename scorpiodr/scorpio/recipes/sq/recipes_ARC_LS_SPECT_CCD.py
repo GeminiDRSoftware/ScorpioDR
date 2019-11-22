@@ -3,7 +3,7 @@ Recipes available to data with tags ['SCORPIO', 'CAL', 'ARC', 'CCD'].
 
 Default recipe is set to "makeProcessedArc".
 """
-recipe_tags = set(['SCORPIO', 'CAL', 'ARC', 'CCD'])
+recipe_tags = set(['SCORPIO', 'CCD', 'SPECT', 'LS', 'ARC'])
 
 def makeProcessedArc(p):
     """
@@ -20,17 +20,14 @@ def makeProcessedArc(p):
     """
 
     p.prepare()
-    p.addDQ()
+    p.addDQ(static_bpm=None)
     p.addVAR(read_noise=True)
     p.overscanCorrect()
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
-
-    # whatever is needed.
-    p.extractSpectrum()
-    p.fitWavelength()
-
+    p.determineWavelengthSolution()
+    p.determineDistortion()
     p.storeProcessedArc()
     return
 

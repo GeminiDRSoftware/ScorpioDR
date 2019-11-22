@@ -23,17 +23,48 @@ def reduce(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
-    p.darkCorrect()
-    p.scatteredLightCorrect()
-    #p.applyWavelengthSolution()
-    p.QECorrect()
+    #p.darkCorrect()
+    #p.scatteredLightCorrect()
+    #p.applyWavelengthSolution()    # depends on Gemini's algorithm.
+    #p.QECorrect()                  # depends on Gemini's algorithm.
     p.flatCorrect()
     p.rejectCosmicRays()
-    p.applyWavelengthSolution()  # transform
-    p.skyCorrect()
+    p.distortionCorrect()
+    p.findSourceApertures()
+    p.skyCorrectFromSlit()
+    p.traceApertures()
+    p.extract1DSpectra()
+    p.linearizeSpectra()
     p.fluxCalibrate()
     p.stackSpectra()
-    p.extractSpectrum()
+    p.writeOutputs()
     return
 
 _default = reduce
+
+
+def reduceStandard(p):
+    """
+    todo: add docstring
+
+    Parameters
+    ----------
+    p : :class:`geminidr.core.primitives_gmos_longslit.GMOSLongslit`
+
+    """
+    p.prepare()
+    p.addDQ(static_bpm=None)
+    p.addVAR(read_noise=True)
+    p.overscanCorrect()
+    p.biasCorrect()
+    p.ADUToElectrons()
+    p.addVAR(poisson_noise=True)
+    p.flatCorrect()
+    p.distortionCorrect()
+    p.findSourceApertures(max_apertures=1)
+    p.skyCorrectFromSlit()
+    p.traceApertures()
+    p.extract1DSpectra()
+    p.linearizeSpectra()   # TDB if needed.
+    p.calculateSensitivity()
+    p.writeOutputs()

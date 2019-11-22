@@ -20,9 +20,10 @@ def makeProcessedFlat(p):
 
     p.prepare()
     p.addDQ()
-    p.ADUToElectrons()
+    p.addVAR(read_noise=True)
     p.nonlinearityCorrect()
-    p.addVAR(read_noise=True, poisson_noise=True)
+    p.ADUToElectrons()
+    p.addVAR(poisson_noise=True)
     p.makeLampFlat()
     p.normalizeFlat()
     p.thresholdFlatfield()

@@ -2,7 +2,7 @@
 Recipes available to data with tags ['SCORPIO', 'SPECT', 'CAL', 'FLAT', 'CCD']
 Default is "makeProcessedFlat".
 """
-recipe_tags = set(['SCORPIO', 'SPECT', 'CAL', 'FLAT', 'CCD'])
+recipe_tags = set(['SCORPIO', 'SPECT', 'LS', 'CAL', 'FLAT', 'CCD'])
 
 def makeProcessedFlat(p):
     """
@@ -25,12 +25,13 @@ def makeProcessedFlat(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
-    p.darkCorrect()
-    p.scatteredLightCorrect()
+    #p.darkCorrect()    # TBD if needed
+    #p.scatteredLightCorrect()   # TBD if needed
     p.stackFrames()
-    p.applyWavelengthSolution()
-    p.QECorrect()
-    p.normalizeFlat()       # does not exist yet.  (for spectro)
+    #p.applyWavelengthSolution()  # TBD if needed (depends on Gemini's algorithm)
+    #p.QECorrect()                # TBD if needed (depends on Gemini's algorithm)
+    p.normalizeFlat()
+    p.thresholdFlatfield()
     p.storeProcessedFlat()
     return
 
