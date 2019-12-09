@@ -28,15 +28,17 @@ def reduce(p):
     #p.applyWavelengthSolution()    # depends on Gemini's algorithm.
     #p.QECorrect()                  # depends on Gemini's algorithm.
     p.flatCorrect()
-    p.rejectCosmicRays()
+    p.rejectCosmicRays()   # TDB
     p.distortionCorrect()
     p.findSourceApertures()
     p.skyCorrectFromSlit()
+    p.resampleToCommonFrame()
+    p.stackFrames()
+    p.findSourceApertures()
     p.traceApertures()
     p.extract1DSpectra()
-    p.linearizeSpectra()
     p.fluxCalibrate()
-    p.stackSpectra()
+    p.linearizeSpectra()   # TBD
     p.writeOutputs()
     return
 
@@ -63,6 +65,8 @@ def reduceStandard(p):
     p.distortionCorrect()
     p.findSourceApertures(max_apertures=1)
     p.skyCorrectFromSlit()
+    p.resampleToCommonFrame()
+    p.stackFrames()
     p.traceApertures()
     p.extract1DSpectra()
     p.linearizeSpectra()   # TDB if needed.
