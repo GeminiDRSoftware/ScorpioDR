@@ -21,7 +21,7 @@ class ScorpioNearIR(Scorpio, NearIR):
     spectroscopy data.
     """
 
-    tagset = set(['GEMINI', 'SCORPIO', 'SPECT', 'NIR'])
+    tagset = set(['GEMINI', 'SCORPIO', 'NIR'])
 
     def __init__(self, adinputs, **kwargs):
         super(ScorpioNearIR, self).__init__(adinputs, **kwargs)
