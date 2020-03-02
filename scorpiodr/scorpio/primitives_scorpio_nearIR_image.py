@@ -7,7 +7,7 @@
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
-from geminidr.core import Image
+from geminidr.core import Image, Photometry
 from .primitives_scorpio_nearIR import ScorpioNearIR
 from . import parameters_scorpio_nearIR_image
 
@@ -15,7 +15,7 @@ from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioNearIRImage(ScorpioNearIR, Image):
+class ScorpioNearIRImage(ScorpioNearIR, Image, Photometry):
     """
     This class contains primitives that applies to all Scorpio near-IR
     imaging data.
