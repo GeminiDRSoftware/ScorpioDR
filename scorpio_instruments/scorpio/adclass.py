@@ -1,4 +1,3 @@
-
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
 from gemini_instruments.common import Section
@@ -9,7 +8,13 @@ class AstroDataScorpio(AstroDataGemini):
     # single keyword mapping. add only the ones that are different
     # from what's already defined in AstroDataGemini.
 
-    __keyword_dict = dict()
+    __keyword_dict = dict(array_name='ARRNAM',
+                          array_section='ARRSEC',
+                          detector_name='DETECTOR',
+                          overscan_parallel='OVRSECP',
+                          overscan_serial='OVRSECS',
+                          reference_pixels='REFSEC',
+                          )
 
     @staticmethod
     def _matches_data(source):
@@ -23,9 +28,16 @@ class AstroDataScorpio(AstroDataGemini):
         return TagSet(['SCORPIO'])
 
     @astro_data_tag
+    def _is_bundle(self):
+        if self.phu.get('BUNDLE') == 'T':
+            return TagSet(['BUNDLE'])
+        #else:
+        #    return TagSet(blocks=['BUNDLE'])
+
+    @astro_data_tag
     def _tag_dark(self):
         if self.phu.get('OBSTYPE') == 'DARK':
-            return TagSet(['DARK'], blocks=['IMAGE', 'SPECT'])
+            return TagSet(['DARK', 'CAL'], blocks=['IMAGE', 'SPECT'])
 
     @astro_data_tag
     def _tag_arc(self):
@@ -45,9 +57,38 @@ class AstroDataScorpio(AstroDataGemini):
     # Also probably needed:
     #    NODANDSHUFFLE, HIFREQ (High time resolution)
 
+    @astro_data_tag
+    def _tag_flat(self):
+        if self.phu.get('OBSTYPE') == 'FLAT':
+            return TagSet(['FLAT', 'CAL'])
+
+    @astro_data_tag
+    def _tag_is_ccd(self):
+        if self.phu.get('CHANNEL').upper() in ['G','R','I','Z']:
+            return TagSet(['CCD'], blocks=['NIR'])
+
+    @astro_data_tag
+    def _tag_is_nir(self):
+        if self.phu.get('CHANNEL').upper() in ['Y','J','H','K']:
+            return TagSet(['NIR'], blocks=['CCD'])
+
+    # TODO: Check the work I did in ScorpioDR_old for GCAL tags
+
     # ----------------------
     # Descriptor definitions
     # ----------------------
+
+    @astro_data_descriptor
+    def detector_name(self):
+        """
+        Returns the name of the detector
+
+        Returns
+        -------
+        str
+            the detector name
+        """
+        return self.phu.get(self._keyword_for('detector_name'))
 
     @astro_data_descriptor
     def overscan_section(self, pretty=False):
