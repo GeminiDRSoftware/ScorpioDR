@@ -5,7 +5,11 @@
 from .primitives_scorpio import Scorpio
 from . import parameters_scorpio_bundle
 
+from gempy.gemini import gemini_tools as gt
 from recipe_system.utils.decorators import parameter_override
+
+import astrodata
+import copy
 # ------------------------------------------------------------------------------
 
 @parameter_override
@@ -49,31 +53,35 @@ class ScorpioBundle(Scorpio):
 
         log = self.log
         log.debug(gt.log_message('primitive', self.myself(), 'starting'))
-        timestamp_key = self.timestamp_keys[self.myself()]
+        #timestamp_key = self.timestamp_keys[self.myself()]
 
         for ad in adinputs:
+            """
             if ad.phu.get(timestamp_key):
                 log.warning("No changes will be made to {}, since it has "
                             "already been processed by {}".format(
                             ad.filename, self.myself()))
                 continue
+            """
 
             log.stdinfo("Unbundling {}:".format(ad.filename))
 
             # We just want all extensions written to their own file, so do all.
             # TODO : decide what the suffix should be for new files.
             #        This should be added to _write_newfile()
-            for ext in ad:
-                _write_newfile(ext, ad, log)
+            for idx, ext in enumerate(ad):
+                _write_newfile(idx, ext, ad, log)
+
+        return []
 
 
-def _write_newfile(extns, base, log):
+def _write_newfile(enum, ext, base, log):
     """
     Helper function to write sub-files out from a MEF bundle.
 
     Parameters
     ----------
-    extns : iterable of :any:`astrodata.Astrodata`
+    ext : iterable of :any:`astrodata.Astrodata`
         AstroData extensions to be appended to the new file
     base : :any:`astrodata.Astrodata`
         Original AstroData instance to base the new file on. The file's primary 
@@ -85,10 +93,10 @@ def _write_newfile(extns, base, log):
     Raises
     ------
     AssertionError
-        If the ``extns`` parameter is :any:`None`, or empty
+        If the ``ext`` parameter is :any:`None`, or empty
     """
 
-    assert extens and len(extens) > 0
+    assert ext and len(ext) > 0
 
     # Copy the PHU from the astrodata base object
     nf = astrodata.create(copy.deepcopy(base.phu))
@@ -96,25 +104,51 @@ def _write_newfile(extns, base, log):
     # Make changes to the PHU
         # BUNDLE to "F"
         # NEXTEND to 1
+        # Add CHANNEL keyword from extension HDR to new file PHU
 
     try:
         nf.phu.set('NEXTEND', 1)
         nf.phu.set('BUNDLE', 'F')
+        nf.phu.set('CHANNEL', ext.hdr['CHANNEL'])
+        nf.phu.set('XOFFSET', ext.hdr['XOFFSET'])
+        nf.phu.set('YOFFSET', ext.hdr['YOFFSET'])
+        nf.phu.set('POFFSET', ext.hdr['POFFSET'])
+        nf.phu.set('QOFFSET', ext.hdr['QOFFSET'])
+        nf.phu.set('RAOFFSET', ext.hdr['RAOFFSET'])
+        nf.phu.set('DECOFFSE', ext.hdr['DECOFFSE'])
+        nf.phu.set('HA', ext.hdr['HA'])
+        nf.phu.set('ELEVATIO', ext.hdr['ELEVATIO'])
+        nf.phu.set('AZIMUTH', ext.hdr['AZIMUTH'])
+        nf.phu.set('PAR_ANG', ext.hdr['PAR_AND'])
+        nf.phu.set('PA', ext.hdr['PA'])
     except KeyError:
         pass
+    else:
+    #    del ext.hdr['CHANNEL']
+        del ext.hdr['XOFFSET']
+        del ext.hdr['YOFFSET']
+        del ext.hdr['POFFSET']
+        del ext.hdr['QOFFSET']
+        del ext.hdr['RAOFFSET']
+        del ext.hdr['DECOFFSE']
+        del ext.hdr['HA']
+        del ext.hdr['ELEVATIO']
+        del ext.hdr['AZIMUTH']
+        del ext.hdr['PAR_ANG']
+        del ext.hdr['PA']
+
     
     # Append the extension to the newly created ad object.
-    for x in extns:
+    for x in ext:
         if (x.hdr.get('NAXIS') > 0) and (x.data.size > 0):
-            newfile.append(x)
-    nf.filename = base.filename
-    nf.update_filename(
+            nf.append(x)
+
+    channel = ext.hdr['CHANNEL']
+    nf.phu.set('FILE', ('_').join(base.filename.split('_')[:-1]) + '_{}_{}.fits'.format(enum+1, channel))
+    nf.filename = ('_').join(base.filename.split('_')[:-1]) + '_{}_{}.fits'.format(enum+1, channel)
+
+    log.stdinfo("    Writing {}".format(nf.filename))
+    nf.write(overwrite=True)
 
 
-# TODO
-# All of GHOST's _get_hdr_values() and _get_common_hdr_values() can be skipped. They're using it as a check to make sure all the extensions contain the same value for the same keyword. But in Scorpio's case, any common keyword will already be in the primary header.
-# Copy the primary header to each individual extension
-# Get the extension and append to new astrodata object (along with original PHU)
-# Get the suffix to be added on to the filename
-# Write the new FITS file
-# Repeat with the next extension from the original MEF
+# TODO: Fix the suffix to be added on to the filename
