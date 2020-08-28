@@ -13,7 +13,10 @@ class AstroDataScorpio(AstroDataGemini):
     # single keyword mapping. add only the ones that are different
     # from what's already defined in AstroDataGemini.
 
-    __keyword_dict = dict(channel='CHANNEL',
+    __keyword_dict = dict(array_name='ARRNAM',
+                          array_section='ARRSEC',
+                          channel='CHANNEL',
+                          read_noise='RDNOIS',
                           )
 
     @staticmethod
@@ -86,6 +89,21 @@ class AstroDataScorpio(AstroDataGemini):
         if bun == 'F' and obj == 'GCALFLAT' and shut == 'CLOSED':
             return TagSet(['LAMPOFF', 'NIR'], blocks=['CCD'])
 
+    # Write our own _parse_section based on the method in the Gemini adclass
+    # It should take into consideration the number of amplifiers in Scorpio
+    """
+    def _parse_section(self, keyword, pretty, namps):
+        section_list = []
+        try:
+            value_filter = (str if pretty else section_to_tuple)
+            process_fn = lambda x: (None if x is None else value_filter(x))
+            section = []
+            for _i in range(1,namps+1):
+                section.append(self.hdr.get(keyword+'{}'.format(_i)))
+            if self.is_single:
+                return
+    """
+
     # ----------------------
     # Descriptor definitions
     # ----------------------
@@ -136,11 +154,61 @@ class AstroDataScorpio(AstroDataGemini):
     # Astrodata User Manual.
 
 
-    # Modified 2020-08-21
+    # Modified 2020-08-27
+    @astro_data_descriptor
+    def amplifier_layout(self):
+        """
+        Returns a tuple of the multi-amplifier shape/layout when multiple 
+        amplifiers exist on one extension. If called on more than one extension,
+        the tuples are returned in a list. Otherwise the shape/layout is 
+        returned as a tuple.
+
+        Returns
+        -------
+        tuple of int / list of tuples of ints
+            Shape or layout of multi-amplifier configuration per extension.
+        """
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
+        
+        arrsec = self.array_section(pretty=False)
+
+        if self.is_single:
+            v_amps = 0
+            h_amps = 0
+            v_max = 0
+            h_max = 0
+            for arr in arrsec:
+                if arr[1] > h_max:
+                    h_amps += 1
+                    h_max = arr[1]
+                if arr[3] > v_max:
+                    v_amps += 1
+                    v_max = arr[3]
+            amp_shape = (v_amps,h_amps)
+            return amp_shape
+        else:
+            amp_shape = []
+            for sec in arrsec:
+                v_amps = 0
+                h_amps = 0
+                v_max = 0
+                h_max = 0
+                for arr in sec:
+                    if arr[1] > h_max:
+                        h_amps += 1
+                        h_max = arr[1]
+                    if arr[3] > v_max:
+                        v_amps += 1
+                        v_max = arr[3]
+                amp_shape.append((v_amps,h_amps))
+            return amp_shape
+
     @astro_data_descriptor
     def amp_total_area(self, pretty=False):
         """
-        Returns the total array size, including data and overscan for each amplifier in each extension.
+        Returns the total array size, including data and overscan for each 
+        amplifier in each extension.
 
         Returns
         -------
@@ -149,7 +217,9 @@ class AstroDataScorpio(AstroDataGemini):
         """
 
         # Get the channel and number of amps
-        channel, namps = self._get_channel_amp_count()
+        #channel, namps = self._get_channel_amp_count()
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
 
         # Create a list for the sections
         read_arrays = []
@@ -188,16 +258,33 @@ class AstroDataScorpio(AstroDataGemini):
     @astro_data_descriptor
     def array_name(self):
         """
-        Returns a list of list of names of the amplifiers in the extensions
-        or a single list of names if called on a single-extension slice.
+        Returns the name for each amplifier array per extension. Because Scorpio
+        has multiple amplifiers per extension, this returns a list of strings 
+        per extension. If the method is called on a single slice, the names are 
+        returned in a list of strings. Otherwise the names are returned in a 
+        list of lists of strings.
 
         Returns
         -------
-        list/list
-            names of the amplifiers of the arrays
+        list of str / list of list of str
+            Names of the amplifiers of the arrays.
         """
 
-        channel, namps = self._get_channel_amp_count()
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
+        keyword = self._keyword_for('array_name')
+
+        name_list = []
+        for amp in range(1,namps+1):
+            name = self.hdr.get(keyword+'{}'.format(amp))
+            if self.is_single:
+                name_list.append(name)
+            else:
+                name_list.append(name[0])
+        if self.is_single:
+            return name_list
+        else:
+            return [name_list]
 
         '''
         names = []
@@ -210,6 +297,7 @@ class AstroDataScorpio(AstroDataGemini):
             return names
         else:
             return [names]
+        '''
         '''
         names = []
         if self.is_single:
@@ -224,40 +312,96 @@ class AstroDataScorpio(AstroDataGemini):
                     extnames.append(name)
                 names.append(extnames)
         return names
+        '''
+
+    @astro_data_descriptor
+    def array_section(self, pretty=False):
+        """
+        Returns the section covered by the array(s) relative to the detector 
+        frame. For example, this can be the position of multiple amps read 
+        within a CCD. If pretty is False, a tuple of 0-based coordinates 
+        is returned with format (x1, x2, y1, y2). If pretty is True, a keyword 
+        value is returned without parsing as a string. In this format, the 
+        coordinates are generally 1-based.
+
+        In the case of Scorpio, one list of tuples or strings is returned per 
+        extension/array in a list. If the method is called on a single slice, 
+        the sections are returned as tuples or strings in a list.
+
+        Parameters
+        ----------
+        pretty : bool
+            If True, return a list of formatted strings found in the header.
+
+        Returns
+        -------
+        list of tuple of integers or list of list of tuples
+            Positions of arrays in extension(s) using Python slice values.
+
+        list of str/list of list of str
+            Position of arrays in extension(s) using a 1-based section format.
+        """
+
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
+        keyword = self._keyword_for('array_section')
+
+        amp_arrays = []
+        for amp in range(1,namps+1):
+            arrsec = self._parse_section(keyword+'{}'.format(amp), pretty)
+            if self.is_single:
+                amp_arrays.append(arrsec)
+            else:
+                amp_arrays.append(arrsec[0])
+        
+        if self.is_single:
+            return amp_arrays
+        else:
+            return [amp_arrays]
 
     @astro_data_descriptor
     def channel(self):
         """
-        Returns the channel name.
+        Returns the channel name. Returns a string if the Scorpio file is 
+        de-bundled or a list if the Scorpio file is a bundle.
 
         Returns
         -------
-        string
+        list of string/string
             Channel color band.
         """
-
-        return self.phu.get(self._keyword_for('channel'), 1)
-
-        '''
-        if self.is_single:
-            return self.phu.get(self._keyword_for('channel'), 1)
-        else:
-            return [self.phu.get(self._keyword_for('channel'), 1)]
-        '''
+        return self.phu.get(self._keyword_for('channel'))
 
     @astro_data_descriptor
     def gain(self):
         """
-        Returns the gain (electrons/ADU) for each amplifier in each extension.
+        Returns the gain (electrons/ADU) for each amplifier in each extension. 
+        Because Scorpio has multiple amplifiers per extension, this returns a 
+        list of floats per extension.
         
         Returns
         -------
-        list
-            Gains used for the observation
+        list of floats / list of list of floats
+            Gains used for the observation.
         """
 
-        channel, namps = self._get_channel_amp_count()
-        
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
+        keyword = self._keyword_for('gain')
+
+        gain_list = []
+        for amp in range(1,namps+1):
+            gain = self.hdr.get(keyword+'{}'.format(amp))
+            if self.is_single:
+                gain_list.append(gain)
+            else:
+                gain_list.append(gain[0])
+        if self.is_single:
+            return gain_list
+        else:
+            return [gain_list]
+
+        """
         gain_list = []
         if self.is_single:
             for i in range(namps):
@@ -280,20 +424,38 @@ class AstroDataScorpio(AstroDataGemini):
                 gain_list.append(ext_gain_list)
         
         return gain_list
+        """
 
     @astro_data_descriptor
     def read_noise(self):
         """
-        Returns the read noise (electrons) for each amplifier in each extension.
-
+        Returns the read noise (electrons) for each amplifier in each extension. 
+        Because Scorpio has multiple amplifiers per extension, this returns a 
+        list of floats per extension.
+        
         Returns
         -------
-        list
-            Read noise present in this observeration.
+        list of floats / list of list of floats
+            Read noised present in the observation.
         """
 
-        channel, namps = self._get_channel_amp_count()
+        channel = self.channel().upper()
+        namps = lookup.amplifier_count.get(channel)
+        keyword = self._keyword_for('read_noise')
+
+        readnoise_list = []
+        for amp in range(1,namps+1):
+            readnoise = self.hdr.get(keyword+'{}'.format(amp))
+            if self.is_single:
+                readnoise_list.append(readnoise)
+            else:
+                readnoise_list.append(readnoise[0])
+        if self.is_single:
+            return readnoise_list
+        else:
+            return [readnoise_list]
         
+        """
         rn_list = []
         if self.is_single:
             for i in range(namps):
@@ -316,7 +478,9 @@ class AstroDataScorpio(AstroDataGemini):
                 rn_list.append(ext_rn_list)
         
         return rn_list
+        """
 
+    '''
     def _get_channel_amp_count(self):
         channel = self.channel().upper()
         namps = None
@@ -327,8 +491,7 @@ class AstroDataScorpio(AstroDataGemini):
             namps = 32
 
         return channel, namps
-
-
+    '''
     '''
     @astro_data_descriptor
     def gain(self):
