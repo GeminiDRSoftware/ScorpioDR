@@ -16,6 +16,7 @@ class AstroDataScorpio(AstroDataGemini):
     __keyword_dict = dict(array_name='ARRNAM',
                           array_section='ARRSEC',
                           channel='CHANNEL',
+                          data_section='DATSEC',
                           read_noise='RDNOIS',
                           )
 
@@ -373,6 +374,12 @@ class AstroDataScorpio(AstroDataGemini):
         return self.phu.get(self._keyword_for('channel'))
 
     @astro_data_descriptor
+    def data_section(self, pretty=False):
+        keyword = self._keyword_for('data_section')
+        return self._build_section_lists(keyword, pretty=pretty)
+
+
+    @astro_data_descriptor
     def gain(self):
         """
         Returns the gain (electrons/ADU) for each amplifier in each extension. 
@@ -522,3 +529,21 @@ class AstroDataScorpio(AstroDataGemini):
         readnoise = lookup.array_properties.get('read_noise{}'.format(channel))
         return [readnoise]
     '''
+
+    def _build_section_lists(self, keyword, pretty=False):
+        # See if there is only one keyword without a number
+        sec = self._parse_section(keyword, pretty=pretty)
+        if not (sec is None or not self.is_single and sec.count(None) == len(sec)):
+            return sec
+
+        # OK, find and resort the keywords
+        sections = []
+        for amp in range(1, 100):
+            sec = self._parse_section(f'{keyword}{amp}', pretty=pretty)
+            if sec is None or not self.is_single and sec.count(None) == len(sec):
+                break
+            sections.append(sec)
+        if self.is_single:
+            return sections
+        return [[sec[i] for sec in sections if sec[i] is not None]
+                for i in range(len(self))]
