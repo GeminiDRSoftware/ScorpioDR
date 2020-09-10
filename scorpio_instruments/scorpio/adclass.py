@@ -378,6 +378,16 @@ class AstroDataScorpio(AstroDataGemini):
         keyword = self._keyword_for('data_section')
         return self._build_section_lists(keyword, pretty=pretty)
 
+    @astro_data_descriptor
+    def overscan_section(self, pretty=False):
+        try:
+            overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
+        except KeyError:
+            # Something for IR arrays?
+            return None if self.is_single else [None] * len(self)
+        else:
+            overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+            return overscan_dict
 
     @astro_data_descriptor
     def gain(self):
@@ -543,6 +553,8 @@ class AstroDataScorpio(AstroDataGemini):
             if sec is None or not self.is_single and sec.count(None) == len(sec):
                 break
             sections.append(sec)
+        if amp == 1:
+            raise KeyError(f"Keywords {keyword} and {keyword}1 not found")
         if self.is_single:
             return sections
         return [[sec[i] for sec in sections if sec[i] is not None]
