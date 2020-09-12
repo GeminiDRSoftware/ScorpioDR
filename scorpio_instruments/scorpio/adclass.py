@@ -121,35 +121,6 @@ class AstroDataScorpio(AstroDataGemini):
         """
         return self.phu.get(self._keyword_for('detector_name'))
 
-    @astro_data_descriptor
-    def overscan_section(self, pretty=False):
-        """
-        Returns the overscan (or bias) section.  If pretty is False, a
-        tuple of 0-based coordinates is returned with format (x1, x2, y1, y2).
-        If pretty is True, a keyword value is returned without parsing as a
-        string.  In this format, the coordinates are generally 1-based.
-        One tuple or string is return per extension/array.  If more than one
-        array, the tuples/strings are return in a list.  Otherwise, the
-        section is returned as a tuple or a string.
-
-        Parameters
-        ----------
-        pretty : bool
-         If True, return the formatted string found in the header.
-
-        Returns
-        -------
-        tuple of integers or list of tuples
-            Position of the overscan section using Python slice values.
-
-        string or list of strings
-            Position of the overscan section using an IRAF section
-            format (1-based).
-        """
-        return self._parse_section('BIASSEC', pretty)
-
-    # Obviously if BIASSEC is not the keyword used for Scorpio change that
-    # in the example above.
 
     # For a list of the expected descriptors see the appendix in the
     # Astrodata User Manual.
@@ -380,6 +351,25 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def overscan_section(self, pretty=False):
+        """
+        Returns the overscan (or bias) sections.  If pretty is False, each
+        section is returned as a tuple of 0-based coordinates with format
+        (x1, x2, y1, y2). If pretty is True, a keyword value is returned
+        without parsing as a string. In this format, the coordinates are
+        generally 1-based. The descriptor for SCORPIO returns a dict keyed
+        by 'serial' and 'parallel' with each value being either a single
+        section in the format dictated by "pretty" (for a single extension)
+        or a list of such sections, one per extension.
+
+        Parameters
+        ----------
+        pretty : bool
+         If True, return the formatted string found in the header.
+
+        Returns
+        -------
+        dict
+        """
         try:
             overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
         except KeyError:
