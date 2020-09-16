@@ -313,23 +313,37 @@ class AstroDataScorpio(AstroDataGemini):
         list of str/list of list of str
             Position of arrays in extension(s) using a 1-based section format.
         """
-
-        channel = self.channel().upper()
-        namps = lookup.amplifier_count.get(channel)
-        keyword = self._keyword_for('array_section')
-
-        amp_arrays = []
-        for amp in range(1,namps+1):
-            arrsec = self._parse_section(keyword+'{}'.format(amp), pretty)
-            if self.is_single:
-                amp_arrays.append(arrsec)
-            else:
-                amp_arrays.append(arrsec[0])
-        
+        arrsec = self._build_section_lists(self._keyword_for('array_section'))
         if self.is_single:
-            return amp_arrays
-        else:
-            return [amp_arrays]
+            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
+                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
+            if pretty:
+                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
+            return section
+
+        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in arrsec]
+        if pretty:
+            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
+        return section
+
+    @astro_data_descriptor
+    def detector_section(self, pretty=False):
+        arrsec = self._build_section_lists(self._keyword_for('detector_section'))
+        if self.is_single:
+            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
+                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
+            if pretty:
+                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
+            return section
+
+        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in arrsec]
+        if pretty:
+            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
+        return section
 
     @astro_data_descriptor
     def channel(self):
