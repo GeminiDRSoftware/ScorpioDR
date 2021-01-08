@@ -116,11 +116,11 @@ def _write_newfile(enum, ext, base, log):
         nf.phu.set('QOFFSET', ext.hdr['QOFFSET'])
         nf.phu.set('RAOFFSET', ext.hdr['RAOFFSET'])
         nf.phu.set('DECOFFSE', ext.hdr['DECOFFSE'])
-        nf.phu.set('HA', ext.hdr['HA'])
-        nf.phu.set('ELEVATIO', ext.hdr['ELEVATIO'])
-        nf.phu.set('AZIMUTH', ext.hdr['AZIMUTH'])
-        nf.phu.set('PAR_ANG', ext.hdr['PAR_AND'])
-        nf.phu.set('PA', ext.hdr['PA'])
+        #nf.phu.set('HA', ext.hdr['HA'])
+        #nf.phu.set('ELEVATIO', ext.hdr['ELEVATIO'])
+        #nf.phu.set('AZIMUTH', ext.hdr['AZIMUTH'])
+        #nf.phu.set('PAR_ANG', ext.hdr['PAR_AND'])
+        #nf.phu.set('PA', ext.hdr['PA'])
     except KeyError:
         pass
     else:
@@ -131,11 +131,11 @@ def _write_newfile(enum, ext, base, log):
         del ext.hdr['QOFFSET']
         del ext.hdr['RAOFFSET']
         del ext.hdr['DECOFFSE']
-        del ext.hdr['HA']
-        del ext.hdr['ELEVATIO']
-        del ext.hdr['AZIMUTH']
-        del ext.hdr['PAR_ANG']
-        del ext.hdr['PA']
+        #del ext.hdr['HA']
+        #del ext.hdr['ELEVATIO']
+        #del ext.hdr['AZIMUTH']
+        #del ext.hdr['PAR_ANG']
+        #del ext.hdr['PA']
 
     
     # Append the extension to the newly created ad object.
