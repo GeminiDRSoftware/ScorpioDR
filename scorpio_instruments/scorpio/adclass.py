@@ -427,6 +427,38 @@ class AstroDataScorpio(AstroDataGemini):
         """
 
     @astro_data_descriptor
+    def map_amplifier_to_layout(self, keyword):
+        """
+        Returns the amplifier-specific values (keyword based) in the 
+        shape of the amplifier order (described in lookup.py) on the CCD 
+        detector.
+
+        Returns
+        -------
+
+        """
+        channel = self.channel().upper()
+        layout = self.amplifier_layout()
+        order = lookup.amplifier_order.get(channel)
+        
+        amparr = []
+        for amp in order:
+            kw = self.hdr.get(keyword+'{}'.format(amp))
+            if self.is_single:
+                amparr.append(kw)
+            else:
+                amparr.append(kw[0])
+        
+        amparr = np.array([amparr])
+
+        if self.is_single:
+            amparr = amparr.reshape(layout)
+            return amparr
+        else:
+            amparr = amparr.reshape(layout[0])
+            return [amparr]
+
+    @astro_data_descriptor
     def read_noise(self):
         """
         Returns the read noise (electrons) for each amplifier in each extension. 
