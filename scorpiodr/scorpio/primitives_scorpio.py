@@ -26,6 +26,7 @@ class Scorpio(Gemini):
 
     def __init__(self, adinputs, **kwargs):
         super(Scorpio, self).__init__(adinputs, **kwargs)
+        self.keyword_comments['DATSEC'] = self.keyword_comments['DATASEC']
         self._param_update(parameters_scorpio)
         # Add Scorpio-specific timestamp keywords
         self.timestamp_keys.update(scorpio_stamps.timestamp_keys)

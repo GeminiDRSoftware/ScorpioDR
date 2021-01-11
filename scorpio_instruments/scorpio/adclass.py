@@ -16,6 +16,7 @@ class AstroDataScorpio(AstroDataGemini):
     __keyword_dict = dict(array_name='ARRNAM',
                           array_section='ARRSEC',
                           channel='CHANNEL',
+                          data_section='DATSEC',
                           read_noise='RDNOIS',
                           )
 
@@ -120,35 +121,6 @@ class AstroDataScorpio(AstroDataGemini):
         """
         return self.phu.get(self._keyword_for('detector_name'))
 
-    @astro_data_descriptor
-    def overscan_section(self, pretty=False):
-        """
-        Returns the overscan (or bias) section.  If pretty is False, a
-        tuple of 0-based coordinates is returned with format (x1, x2, y1, y2).
-        If pretty is True, a keyword value is returned without parsing as a
-        string.  In this format, the coordinates are generally 1-based.
-        One tuple or string is return per extension/array.  If more than one
-        array, the tuples/strings are return in a list.  Otherwise, the
-        section is returned as a tuple or a string.
-
-        Parameters
-        ----------
-        pretty : bool
-         If True, return the formatted string found in the header.
-
-        Returns
-        -------
-        tuple of integers or list of tuples
-            Position of the overscan section using Python slice values.
-
-        string or list of strings
-            Position of the overscan section using an IRAF section
-            format (1-based).
-        """
-        return self._parse_section('BIASSEC', pretty)
-
-    # Obviously if BIASSEC is not the keyword used for Scorpio change that
-    # in the example above.
 
     # For a list of the expected descriptors see the appendix in the
     # Astrodata User Manual.
@@ -341,23 +313,37 @@ class AstroDataScorpio(AstroDataGemini):
         list of str/list of list of str
             Position of arrays in extension(s) using a 1-based section format.
         """
-
-        channel = self.channel().upper()
-        namps = lookup.amplifier_count.get(channel)
-        keyword = self._keyword_for('array_section')
-
-        amp_arrays = []
-        for amp in range(1,namps+1):
-            arrsec = self._parse_section(keyword+'{}'.format(amp), pretty)
-            if self.is_single:
-                amp_arrays.append(arrsec)
-            else:
-                amp_arrays.append(arrsec[0])
-        
+        arrsec = self._build_section_lists(self._keyword_for('array_section'))
         if self.is_single:
-            return amp_arrays
-        else:
-            return [amp_arrays]
+            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
+                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
+            if pretty:
+                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
+            return section
+
+        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in arrsec]
+        if pretty:
+            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
+        return section
+
+    @astro_data_descriptor
+    def detector_section(self, pretty=False):
+        arrsec = self._build_section_lists(self._keyword_for('detector_section'))
+        if self.is_single:
+            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
+                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
+            if pretty:
+                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
+            return section
+
+        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in arrsec]
+        if pretty:
+            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
+        return section
 
     @astro_data_descriptor
     def channel(self):
@@ -371,6 +357,41 @@ class AstroDataScorpio(AstroDataGemini):
             Channel color band.
         """
         return self.phu.get(self._keyword_for('channel'))
+
+    @astro_data_descriptor
+    def data_section(self, pretty=False):
+        keyword = self._keyword_for('data_section')
+        return self._build_section_lists(keyword, pretty=pretty)
+
+    @astro_data_descriptor
+    def overscan_section(self, pretty=False):
+        """
+        Returns the overscan (or bias) sections.  If pretty is False, each
+        section is returned as a tuple of 0-based coordinates with format
+        (x1, x2, y1, y2). If pretty is True, a keyword value is returned
+        without parsing as a string. In this format, the coordinates are
+        generally 1-based. The descriptor for SCORPIO returns a dict keyed
+        by 'serial' and 'parallel' with each value being either a single
+        section in the format dictated by "pretty" (for a single extension)
+        or a list of such sections, one per extension.
+
+        Parameters
+        ----------
+        pretty : bool
+         If True, return the formatted string found in the header.
+
+        Returns
+        -------
+        dict
+        """
+        try:
+            overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
+        except KeyError:
+            # Something for IR arrays?
+            return None if self.is_single else [None] * len(self)
+        else:
+            overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+            return overscan_dict
 
     @astro_data_descriptor
     def gain(self):
@@ -554,3 +575,23 @@ class AstroDataScorpio(AstroDataGemini):
         readnoise = lookup.array_properties.get('read_noise{}'.format(channel))
         return [readnoise]
     '''
+
+    def _build_section_lists(self, keyword, pretty=False):
+        # See if there is only one keyword without a number
+        sec = self._parse_section(keyword, pretty=pretty)
+        if not (sec is None or not self.is_single and sec.count(None) == len(sec)):
+            return sec
+
+        # OK, find and resort the keywords
+        sections = []
+        for amp in range(1, 100):
+            sec = self._parse_section(f'{keyword}{amp}', pretty=pretty)
+            if sec is None or not self.is_single and sec.count(None) == len(sec):
+                break
+            sections.append(sec)
+        if amp == 1:
+            raise KeyError(f"Keywords {keyword} and {keyword}1 not found")
+        if self.is_single:
+            return sections
+        return [[sec[i] for sec in sections if sec[i] is not None]
+                for i in range(len(self))]
