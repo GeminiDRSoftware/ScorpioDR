@@ -182,6 +182,7 @@ class AstroDataScorpio(AstroDataGemini):
             return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
         return section
 
+    """
     @astro_data_descriptor
     def detector_section(self, pretty=False):
         arrsec = self._build_section_lists(self._keyword_for('detector_section'))
@@ -198,6 +199,7 @@ class AstroDataScorpio(AstroDataGemini):
         if pretty:
             return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
         return section
+    """
 
     @astro_data_descriptor
     def channel(self):
