@@ -262,21 +262,23 @@ class AstroDataScorpio(AstroDataGemini):
             Gains used for the observation.
         """
 
-        channel = self.channel().upper()
-        namps = lookup.amplifier_count.get(channel)
+        values = []
         keyword = self._keyword_for('gain')
-
-        gain_list = []
-        for amp in range(1,namps+1):
-            gain = self.hdr.get(keyword+'{}'.format(amp))
+        for amp in range(1, 100):
+            value = self.hdr.get(f'{keyword}{amp}')
             if self.is_single:
-                gain_list.append(gain)
+                if value is None:
+                    break
+                values.append(value)
             else:
-                gain_list.append(gain[0])
+                if value[0] is None:
+                    break
+                values.append(value[0])
+
         if self.is_single:
-            return gain_list
+            return values
         else:
-            return [gain_list]
+            return [values]
 
     @astro_data_descriptor
     def read_noise(self):
@@ -291,21 +293,23 @@ class AstroDataScorpio(AstroDataGemini):
             Read noised present in the observation.
         """
 
-        channel = self.channel().upper()
-        namps = lookup.amplifier_count.get(channel)
+        values = []
         keyword = self._keyword_for('read_noise')
-
-        readnoise_list = []
-        for amp in range(1,namps+1):
-            readnoise = self.hdr.get(keyword+'{}'.format(amp))
+        for amp in range(1, 100):
+            value = self.hdr.get(f'{keyword}{amp}')
             if self.is_single:
-                readnoise_list.append(readnoise)
+                if value is None:
+                    break
+                values.append(value)
             else:
-                readnoise_list.append(readnoise[0])
+                if value[0] is None:
+                    break
+                values.append(value[0])
+
         if self.is_single:
-            return readnoise_list
+            return values
         else:
-            return [readnoise_list]
+            return [values]
         
     '''
     @astro_data_descriptor
