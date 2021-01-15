@@ -179,24 +179,43 @@ class AstroDataScorpio(AstroDataGemini):
                 (",".join(tuple_to_section(sec, pretty=True) for sec in asec)
                  if pretty else asec) for asec in arrsec]
 
-    """
     @astro_data_descriptor
     def detector_section(self, pretty=False):
-        arrsec = self._build_section_lists(self._keyword_for('detector_section'))
-        if self.is_single:
-            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
-                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
-            if pretty:
-                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
-            return section
+        """
+        Returns the section covered by each extension relative to the whole
+        mosaic of detectors.  If pretty is False, a tuple of 0-based coordinates
+        is returned with format (x1, x2, y1, y2).  If pretty is True, a keyword
+        value is returned without parsing as a string.  In this format, the
+        coordinates are generally 1-based.
 
-        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
-                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
-                   for asec in arrsec]
-        if pretty:
-            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
-        return section
-    """
+        One tuple or string is return per extension/array, in a list. If the
+        method is called on a single slice, the section is returned as a tuple
+        or a string.
+
+        For SCORPIO, there is no mosaicking to produce the "mosaic of
+        detectors" -- each channel is its own "mosaic of detectors".
+
+        Parameters
+        ----------
+        pretty : bool
+            if True, return a 1-indexed string representation of each section
+
+        Returns
+        -------
+        tuple/str or list of tuple/str
+            the contiguous location on the final detector where these pixels
+            will land
+        """
+        detsec = self._build_section_lists(self._keyword_for('detector_section'))
+        if self.is_single:
+            section = Section(x1=min(s.x1 for s in detsec), x2=max(s.x2 for s in detsec),
+                              y1=min(s.y1 for s in detsec), y2=max(s.y2 for s in detsec))
+            return tuple_to_section(section, pretty=pretty)
+
+        sections = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                            y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in detsec]
+        return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
     def channel(self):
@@ -213,8 +232,40 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def data_section(self, pretty=False):
-        keyword = self._keyword_for('data_section')
-        return self._build_section_lists(keyword, pretty=pretty)
+        """
+        Returns the rectangular section that includes the pixels that would be
+        exposed to light.  If pretty is False, a tuple of 0-based coordinates
+        is returned with format (x1, x2, y1, y2).  If pretty is True, a keyword
+        value is returned without parsing as a string.  In this format, the
+        coordinates are generally 1-based.
+
+        One tuple or string is return per extension/array, in a list. If the
+        method is called on a single slice, the section is returned as a tuple
+        or a string.
+
+        For SCORPIO, this descriptor assumes that the individual amps sections
+        are contiguous, and therefore a single section is returned per extension
+
+        Parameters
+        ----------
+        pretty : bool
+            if True, return a 1-indexed string representation
+
+        Returns
+        -------
+        tuple/str or list of tuple/str
+            location of the pixels exposed to light
+        """
+        datasec = self._build_section_lists(self._keyword_for('data_section'))
+        if self.is_single:
+            section = Section(x1=min(s.x1 for s in datasec), x2=max(s.x2 for s in datasec),
+                              y1=min(s.y1 for s in datasec), y2=max(s.y2 for s in datasec))
+            return tuple_to_section(section, pretty=pretty)
+
+        sections = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
+                            y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
+                   for asec in datasec]
+        return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
     def overscan_section(self, pretty=False):
