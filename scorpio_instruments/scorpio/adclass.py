@@ -220,13 +220,14 @@ class AstroDataScorpio(AstroDataGemini):
         """
         datasec = self._build_section_lists(self._keyword_for('data_section'))
         if self.is_single:
-            section = Section(x1=min(s.x1 for s in datasec), x2=max(s.x2 for s in datasec),
-                              y1=min(s.y1 for s in datasec), y2=max(s.y2 for s in datasec))
-            return tuple_to_section(section, pretty=pretty)
+            if isinstance(datasec, list):
+                datasec = Section(x1=min(s.x1 for s in datasec), x2=max(s.x2 for s in datasec),
+                                  y1=min(s.y1 for s in datasec), y2=max(s.y2 for s in datasec))
+            return tuple_to_section(datasec, pretty=pretty)
 
-        sections = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
-                            y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
-                   for asec in datasec]
+        sections = [Section(x1=min(s.x1 for s in dsec), x2=max(s.x2 for s in dsec),
+                            y1=min(s.y1 for s in dsec), y2=max(s.y2 for s in dsec))
+                    if isinstance(dsec, list) else dsec for dsec in datasec]
         return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
