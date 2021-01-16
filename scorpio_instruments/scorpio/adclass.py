@@ -180,44 +180,6 @@ class AstroDataScorpio(AstroDataGemini):
                  if pretty else asec) for asec in arrsec]
 
     @astro_data_descriptor
-    def detector_section(self, pretty=False):
-        """
-        Returns the section covered by each extension relative to the whole
-        mosaic of detectors.  If pretty is False, a tuple of 0-based coordinates
-        is returned with format (x1, x2, y1, y2).  If pretty is True, a keyword
-        value is returned without parsing as a string.  In this format, the
-        coordinates are generally 1-based.
-
-        One tuple or string is return per extension/array, in a list. If the
-        method is called on a single slice, the section is returned as a tuple
-        or a string.
-
-        For SCORPIO, there is no mosaicking to produce the "mosaic of
-        detectors" -- each channel is its own "mosaic of detectors".
-
-        Parameters
-        ----------
-        pretty : bool
-            if True, return a 1-indexed string representation of each section
-
-        Returns
-        -------
-        tuple/str or list of tuple/str
-            the contiguous location on the final detector where these pixels
-            will land
-        """
-        detsec = self._build_section_lists(self._keyword_for('detector_section'))
-        if self.is_single:
-            section = Section(x1=min(s.x1 for s in detsec), x2=max(s.x2 for s in detsec),
-                              y1=min(s.y1 for s in detsec), y2=max(s.y2 for s in detsec))
-            return tuple_to_section(section, pretty=pretty)
-
-        sections = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
-                            y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
-                   for asec in detsec]
-        return [tuple_to_section(sec, pretty=pretty) for sec in sections]
-
-    @astro_data_descriptor
     def channel(self):
         """
         Returns the channel name. Returns a string if the Scorpio file is 
