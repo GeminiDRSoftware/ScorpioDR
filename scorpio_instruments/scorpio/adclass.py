@@ -1,8 +1,7 @@
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
-from gemini_instruments.common import Section
 from gemini_instruments.gemini import AstroDataGemini
-from gemini_instruments.common import section_to_tuple
+from gemini_instruments.common import Section, tuple_to_section
 
 import numpy as np
 
@@ -150,9 +149,10 @@ class AstroDataScorpio(AstroDataGemini):
         value is returned without parsing as a string. In this format, the 
         coordinates are generally 1-based.
 
-        In the case of Scorpio, one list of tuples or strings is returned per 
-        extension/array in a list. If the method is called on a single slice, 
-        the sections are returned as tuples or strings in a list.
+        In the case of Scorpio, each extension returns either a list of tuples
+        (one per amplifier), or a single string containing a 1-indexed section
+        per amp, joined with commas. If the method is called on a single slice,
+        the sections are returned as tuples or a single string.
 
         Parameters
         ----------
@@ -164,42 +164,20 @@ class AstroDataScorpio(AstroDataGemini):
         list of tuple of integers or list of list of tuples
             Positions of arrays in extension(s) using Python slice values.
 
-        list of str/list of list of str
+        str/list of str
             Position of arrays in extension(s) using a 1-based section format.
         """
         arrsec = self._build_section_lists(self._keyword_for('array_section'))
         if self.is_single:
-            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
-                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
-            if pretty:
-                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
-            return section
+            return (tuple_to_section(arrsec, pretty=pretty)
+                    if isinstance(arrsec, Section) else
+                    (",".join(tuple_to_section(sec, pretty=True) for sec in arrsec)
+                     if pretty else arrsec))
 
-        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
-                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
-                   for asec in arrsec]
-        if pretty:
-            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
-        return section
-
-    """
-    @astro_data_descriptor
-    def detector_section(self, pretty=False):
-        arrsec = self._build_section_lists(self._keyword_for('detector_section'))
-        if self.is_single:
-            section = Section(x1=min(s.x1 for s in arrsec), x2=max(s.x2 for s in arrsec),
-                              y1=min(s.y1 for s in arrsec), y2=max(s.y2 for s in arrsec))
-            if pretty:
-                return f'[{section.x1+1}:{section.x2}:{section.y1+1}:{section.y2}]'
-            return section
-
-        section = [Section(x1=min(s.x1 for s in asec), x2=max(s.x2 for s in asec),
-                           y1=min(s.y1 for s in asec), y2=max(s.y2 for s in asec))
-                   for asec in arrsec]
-        if pretty:
-            return [f'[{s.x1+1}:{s.x2}:{s.y1+1}:{s.y2}]' for s in section]
-        return section
-    """
+        return [tuple_to_section(asec, pretty=pretty)
+                if isinstance(asec, Section) else
+                (",".join(tuple_to_section(sec, pretty=True) for sec in asec)
+                 if pretty else asec) for asec in arrsec]
 
     @astro_data_descriptor
     def channel(self):
@@ -216,8 +194,41 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def data_section(self, pretty=False):
-        keyword = self._keyword_for('data_section')
-        return self._build_section_lists(keyword, pretty=pretty)
+        """
+        Returns the rectangular section that includes the pixels that would be
+        exposed to light.  If pretty is False, a tuple of 0-based coordinates
+        is returned with format (x1, x2, y1, y2).  If pretty is True, a keyword
+        value is returned without parsing as a string.  In this format, the
+        coordinates are generally 1-based.
+
+        One tuple or string is return per extension/array, in a list. If the
+        method is called on a single slice, the section is returned as a tuple
+        or a string.
+
+        For SCORPIO, this descriptor assumes that the individual amps sections
+        are contiguous, and therefore a single section is returned per extension
+
+        Parameters
+        ----------
+        pretty : bool
+            if True, return a 1-indexed string representation
+
+        Returns
+        -------
+        tuple/str or list of tuple/str
+            location of the pixels exposed to light
+        """
+        datasec = self._build_section_lists(self._keyword_for('data_section'))
+        if self.is_single:
+            if isinstance(datasec, list):
+                datasec = Section(x1=min(s.x1 for s in datasec), x2=max(s.x2 for s in datasec),
+                                  y1=min(s.y1 for s in datasec), y2=max(s.y2 for s in datasec))
+            return tuple_to_section(datasec, pretty=pretty)
+
+        sections = [Section(x1=min(s.x1 for s in dsec), x2=max(s.x2 for s in dsec),
+                            y1=min(s.y1 for s in dsec), y2=max(s.y2 for s in dsec))
+                    if isinstance(dsec, list) else dsec for dsec in datasec]
+        return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
     def overscan_section(self, pretty=False):
@@ -361,3 +372,4 @@ class AstroDataScorpio(AstroDataGemini):
             return sections
         return [[sec[i] for sec in sections if sec[i] is not None]
                 for i in range(len(self))]
+
