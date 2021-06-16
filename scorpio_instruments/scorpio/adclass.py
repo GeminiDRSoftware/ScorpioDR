@@ -325,6 +325,42 @@ class AstroDataScorpio(AstroDataGemini):
             return values
         else:
             return [values]
+
+    @astro_data_descriptor
+    def refpix_section(self, pretty=False):
+        topsec = self._build_section_lists(self._keyword_for('ref_sec_top'))
+        botsec = self._build_section_lists(self._keyword_for('ref_sec_bot'))
+        sidesec = self._build_section_lists(self._keyword_for('ref_sec_side'))
+
+        if self.is_single:
+            top = (tuple_to_section(topsec, pretty=pretty) 
+                   if isinstance(topsec, Section) else
+                   (",".join(tuple_to_section(sec, pretty=True) for sec in topsec)
+                    if pretty else topsec))
+            bot = (tuple_to_section(botsec, pretty=pretty) 
+                   if isinstance(botsec, Section) else
+                   (",".join(tuple_to_section(sec, pretty=True) for sec in botsec)
+                    if pretty else botsec))
+            side = (tuple_to_section(sidesec, pretty=pretty) 
+                    if isinstance(sidesec, Section) else
+                    (",".join(tuple_to_section(sec, pretty=True) for sec in sidesec)
+                     if pretty else sidesec))
+            return ({'top':top, 'bottom':bot, 'side':side})
+
+        top = [tuple_to_section(tsec, pretty=pretty)
+               if isinstance(tsec, Section) else
+               (",".join(tuple_to_section(sec, pretty=True) for sec in tsec)
+                if pretty else tsec) for tsec in topsec]
+        bot = [tuple_to_section(bsec, pretty=pretty)
+               if isinstance(bsec, Section) else
+               (",".join(tuple_to_section(sec, pretty=True) for sec in bsec)
+                if pretty else bsec) for bsec in botsec]
+        side = [tuple_to_section(ssec, pretty=pretty)
+               if isinstance(ssec, Section) else
+               (",".join(tuple_to_section(sec, pretty=True) for sec in ssec)
+                if pretty else ssec) for ssec in sidesec]
+        return ({'top':top, 'bottom':bot, 'side':side})
+
         
     '''
     @astro_data_descriptor
