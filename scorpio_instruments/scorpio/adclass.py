@@ -15,8 +15,12 @@ class AstroDataScorpio(AstroDataGemini):
     __keyword_dict = dict(array_name='ARRNAM',
                           array_section='ARRSEC',
                           channel='CHANNEL',
+                          dark_section='DARKSEC',
                           data_section='DATSEC',
                           read_noise='RDNOIS',
+                          ref_sec_top='REFSCT',
+                          ref_sec_bot='REFSCB',
+                          ref_sec_side='REFSCS',
                           )
 
     @staticmethod
