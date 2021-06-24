@@ -1,11 +1,16 @@
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
 from gemini_instruments.gemini import AstroDataGemini
-from gemini_instruments.common import Section, tuple_to_section
+from gemini_instruments.common import Section
 
 import numpy as np
 
 from . import lookup
+
+
+def tuple_to_section(sec, pretty=False):
+    return sec.asIRAFSection() if pretty else sec
+
 
 class AstroDataScorpio(AstroDataGemini):
 
