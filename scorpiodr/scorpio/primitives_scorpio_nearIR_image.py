@@ -30,6 +30,26 @@ class ScorpioNearIRImage(ScorpioNearIR, Image, Photometry):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR_image)
 
+    def detectJumps(self, adclass=None, **params):
+        """
+        Two-Point Difference method for finding outliers in a 3-D ramp data array.
+        The scheme used in this variation of the method uses numpy array methods
+        to compute first-differences and find the max outlier in each pixel while
+        still working in the full 3-D data array. This makes detection of the first
+        outlier very fast. We then iterate pixel-by-pixel over only those pixels
+        that are already known to contain an outlier, to look for any additional
+        outliers and set the appropriate DQ mask for all outliers in the pixel.
+        This is MUCH faster than doing all the work on a pixel-by-pixel basis.
+
+        This function has been modified from its original location, here:
+        https://github.com/spacetelescope/stcal
+        Accessed June 2021-.
+
+        The method used in this function is based on the method by Anderson & Gordon, 2011, which can be found here: https://iopscience.iop.org/article/10.1086/662593
+
+
+        """
+
     def referencePixelCorrect(self, adinputs=None, **params):
         # Need to do checks for image size, like Full, Windowed, etc.
         # Need license info
