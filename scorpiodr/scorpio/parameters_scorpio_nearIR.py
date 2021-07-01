@@ -9,6 +9,9 @@ class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
         self.attach_mdf = False
 
+class referencePixelCorrectConfig(config.Config):
+    suffix = config.Field("Filename suffix", str, "_refpixelCorrected", optional=True)
+
 class myNewPrimitive(config.Config):
     suffix = config.Field("Filename suffix", str, "_suffix")
     param1 = config.Field("Param1", str, "default")
