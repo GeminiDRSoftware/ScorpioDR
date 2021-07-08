@@ -20,8 +20,7 @@ import sys
 @parameter_override
 class ScorpioNearIR(Scorpio, NearIR):
     """
-    This class contains primitives that applies to all Scorpio near-IR
-    spectroscopy data.
+    This class contains primitives that applies to all Scorpio near-IR data.
     """
 
     tagset = set(['GEMINI', 'SCORPIO', 'NIR'])
@@ -44,7 +43,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         This function has been modified from its original location, here:
         https://github.com/spacetelescope/stcal
-        Accessed June 2021-.
+        Accessed February 2021-.
 
         The method used in this function is based on the method by Anderson & Gordon, 2011, which can be found here: https://iopscience.iop.org/article/10.1086/662593
 
@@ -52,16 +51,11 @@ class ScorpioNearIR(Scorpio, NearIR):
         """
 
     def referencePixelCorrect(self, adinputs=None, **params):
-        # Need to do checks for image size, like Full, Windowed, etc.
-        # Need license info
-        # Add citation to pyNRC and Massimo Robberto
-        # Add further authoring info (me)
-        # Code goes here
-
         """
-        This primitive is used to correct a SCORPIO NIR image's noise using its reference pixels. SCORPIO's reference pixels are laid out very specifically as even the "full" image size is smaller than the detector size.
-
-        The code in in this function
+        This primitive is used to correct a SCORPIO NIR image's noise using its
+        reference pixels. SCORPIO's reference pixels are laid out very
+        specifically as even the "full" image size is smaller than the detector
+        size.
 
         Parameters
         ----------
