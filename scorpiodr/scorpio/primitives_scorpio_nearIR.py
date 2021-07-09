@@ -164,14 +164,14 @@ class ScorpioNearIR(Scorpio, NearIR):
                         ext.data[frm, datasec[amp].y1:datasec[amp].y2, datasec[amp].x1:datasec[amp].x2] -= amp_deltas[amp+1]
 
                 # From the time array, which is the size of the original
-                # amplifier, slice out the corresponding horizontal, vertical,
-                # and side reference pixels.
+                # amplifier, slice out the corresponding horizontal and vertical
+                # reference pixels.
                 time_top = time[rpix_top_sec[0].y1:rpix_top_sec[0].y2, 0:amp_cols]
                 time_bot = time[rpix_bot_sec[0].y1:rpix_bot_sec[0].y2, 0:amp_cols]
                 time_side = time[rpix_side_sec[2].y1:-rpix_side_sec[2].y1, rpix_side_sec[0].x1:rpix_side_sec[0].x2]
 
-                # Create lists for the arrays of horizontal, vertical, and side
-                # ramp averages.
+                # Create lists for the arrays of horizontal and vertical ramp
+                # averages.
                 ramp_avg_top = []
                 ramp_avg_bot = []
                 ramp_avg_side = []
@@ -252,8 +252,8 @@ class ScorpioNearIR(Scorpio, NearIR):
                     # Make the list for holding the amplifier correctors. Then
                     # loop over the amplifiers and create the corrector function
                     # for each amplifier. Each corrector should be shape
-                    # (2048, 1). Replicate this to be (2048, 64). Then assemble
-                    # the corrector array.
+                    # (2048, 1). Replicate this to be (2048, 64) (the size of
+                    # one amp). Then assemble the corrector array.
                     correctors = []
                     for amp in range(namps):
                         corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg) + smoothed_data
