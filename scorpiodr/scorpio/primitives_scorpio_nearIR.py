@@ -123,7 +123,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
 
 
-    def referencePixelCorrect(self, adinputs=None, **params):
+    def referencePixelsCorrect(self, adinputs=None, **params):
         """
         This primitive is used to correct a SCORPIO NIR image's noise using its
         reference pixels. SCORPIO's reference pixels are laid out very
