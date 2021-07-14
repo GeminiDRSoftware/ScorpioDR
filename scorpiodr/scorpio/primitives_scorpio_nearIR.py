@@ -32,6 +32,12 @@ class ScorpioNearIR(Scorpio, NearIR):
 
     def detectJumps(self, adclass=None, **params):
         """
+        This function has been modified from its original location, here:
+        https://github.com/spacetelescope/stcal
+        Accessed February 2021-.
+
+        The method used in this function is based on the method by Anderson & Gordon, 2011, which can be found here: https://iopscience.iop.org/article/10.1086/662593
+
         Two-Point Difference method for finding outliers in a 3-D ramp data array.
         The scheme used in this variation of the method uses numpy array methods
         to compute first-differences and find the max outlier in each pixel while
@@ -41,14 +47,81 @@ class ScorpioNearIR(Scorpio, NearIR):
         outliers and set the appropriate DQ mask for all outliers in the pixel.
         This is MUCH faster than doing all the work on a pixel-by-pixel basis.
 
-        This function has been modified from its original location, here:
-        https://github.com/spacetelescope/stcal
-        Accessed February 2021-.
-
-        The method used in this function is based on the method by Anderson & Gordon, 2011, which can be found here: https://iopscience.iop.org/article/10.1086/662593
-
-
+        Parameters
+        ----------
+        suffix: str
+            suffix to be added to output files
         """
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        sfx = params["suffix"]
+
+        for ad in adinputs:
+            for e, ext in enumerate(ad):
+                # Get data characteristics
+                ngroups, nrows, ncols = ext.data.shape
+                ndiffs = ngroups - 1
+
+                # Square the read noise values, for use later
+                read_noise = read_noise ** 2
+
+                # Set the saturated values and pixels flagged as DO_NOT_USE in
+                # the input data array to NaN, so they don't get used in any of
+                # the subsequent calculations.
+                ext.data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
+                ext.data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
+
+                # Compute first differences of adjacent groups up the ramp.
+                # Note: roll the ngroups axis of data array to the end, to make
+                # memory axxess to the values for a given pixel faster.
+                # New form of the array has dimensions [nrows, ncols, ngroups].
+                first_diffs = np.diff(np.rollaxis(ext.data, axis=0, start=3), axis=2)
+                positive_first_diffs = np.abs(first_diffs)
+
+                # sat_groups is a 3D array that is true when the group is
+                # saturated.
+                sat_groups = np.isnan(positive_first_diffs)
+
+                # number_sat_groups is a 2D array with the count of saturated
+                # groups for each pixel.
+                number_sat_groups = sat_groups.sum(axis=2)
+
+                # Make all the first diffs for saturated groups be equal to
+                # 100,000 to put them above the good values in the sorted index.
+                first_diffs[np.isnan(first_diffs)] = 100000.
+
+                # Here we sort the 3D array along the last axis, which is the
+                # group axis. np.argsort returns a 3D array with the last axis
+                # containing the indices that would yield the groups in order.
+                sort_index = np.argsort(positive_first_diffs)
+
+                # median_diffs is a 2D array with the clipped median of each pixel
+                median_diffs = self._get_clipped_median_array(ndiffs, number_sat_groups, first_diffs, sort_index)
+
+                # Currently we do not have a keyword for nframes, the number of samples
+                # averaged together into each frame. 
+                # nframes is the number of samples averaged into a single group.
+                nframes = 
+
+                # Compute uncertainties as the quadrature sum of the poisson
+                # noise in the first difference signal and read noise. Because
+                # the first differences can be biased by CRs/jumps, we use the
+                # median signal for computing the poisson noise. Here we lower
+                # the read noise by the square root of number of frames in
+                # the group. Sigma is a 3D array.
+                sigma = np.sqrt(np.abs(median_diffs) + read_noise_2 / nframes)
+
+                # Reset sigma to exclude pixels with both readnoise and signal=0
+                sigma_0_pixels = np.where(sigma == 0.)
+                if len(sigma_0_pixels[0] > 0):
+                    log.debug(f'Twopt found {len(sigma_0_pixels[0])} pixels with sigma=0')
+                    log.debug('which will be reset so that no jump will be detected.')
+                    huge_num = np.finfo(np.float32).max
+                    sigma[sigma_0_pixels] = huge_num
+
+                
+
+
 
     def referencePixelCorrect(self, adinputs=None, **params):
         """
