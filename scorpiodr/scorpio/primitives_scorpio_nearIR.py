@@ -101,7 +101,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # Currently we do not have a keyword for nframes, the number of samples
                 # averaged together into each frame. 
                 # nframes is the number of samples averaged into a single group.
-                nframes = 
+                #nframes = 
 
                 # Compute uncertainties as the quadrature sum of the poisson
                 # noise in the first difference signal and read noise. Because
@@ -366,6 +366,68 @@ class ScorpioNearIR(Scorpio, NearIR):
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
 
+        return adinputs
+
+    def trimReferencePixels(self, adinputs=None, **params):
+        """
+        This primitive is used to remove both the reference pixels and the
+        non-illuminated active data pixels that are not included in the
+        data section. 
+
+        Parameters
+        ----------
+        suffix: str
+            suffix to be added to output files
+        """
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        sfx = params["suffix"]
+
+        for ad in adinputs:
+            # Get the keywords for all sections to be trimmed.
+            datasec_kw = ad._keyword_for('data_section')
+            darksec_kw = ad._keyword_for('dark_section')
+            refpixt_kw = ad._keyword_for('ref_sec_top')
+            refpixb_kw = ad._keyword_for('ref_sec_bot')
+            refpixs_kw = ad._keyword_for('ref_sec_side')
+
+            all_datasecs = ad.data_section()
+
+            for ext, datasec in zip(ad, all_datasecs):
+                # Trim SCI, VAR, DQ arrays
+                ext.reset(ext.nddata[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
+
+                # And OBJMASK (if it exists)
+                if hasattr(ext, 'OBJMASK'):
+                    ext.OBJMASK = ext.OBJMASK[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+
+                # Update the data section keywords in the header
+                sections, new_sections = gt.map_data_sections_to_trimmed_data(datasec)
+                xshift = sections[0].x1 - new_sections[0].x1
+                yshift = sections[0].y1 - new_sections[0].y1
+                ampsec_list = gt.map_array_sections(ext)
+                for amp, sec in zip(range(1,len(ampsec_list)+1), ampsec_list):
+                    new_x1 = sec.x1 - xshift + 1
+                    new_x2 = sec.x2 - xshift
+                    new_y1 = sec.y1 - yshift + 1
+                    new_y2 = sec.y2 - yshift
+                    newDataSecStr = f'[{new_x1}:{new_x2},{new_y1}:{new_y2}]'
+                    ext.hdr[f'{datasec_kw}{amp}'] = newDataSecStr
+
+                # Remove the reference pixel and dark section keywords from the headers
+                for amp in range(1,100):
+                    if f'{darksec_kw}{amp}' in ext.hdr:
+                        del ext.hdr[f'{darksec_kw}{amp}']
+                    if f'{refsect_kw}{amp}' in ext.hdr:
+                        del ext.hdr[f'{refsect_kw}{amp}']
+                    if f'{refsecb_kw}{amp}' in ext.hdr:
+                        del ext.hdr[f'{refsecb_kw}{amp}']
+                    if f'{refsecs_kw}{amp}' in ext.hdr:
+                        del ext.hdr[f'{refsecs_kw}{amp}']
+
+            # Update the filename.
+            ad.update_filename(suffix=sfx, strip=True)
+        
         return adinputs
 
     def _smoothFFT(self, data, delt, first_deriv=False, second_deriv=False):
