@@ -125,10 +125,19 @@ class ScorpioNearIR(Scorpio, NearIR):
 
     def referencePixelsCorrect(self, adinputs=None, **params):
         """
-        This primitive is used to correct a SCORPIO NIR image's noise using its
-        reference pixels. SCORPIO's reference pixels are laid out very
-        specifically as even the "full" image size is smaller than the detector
-        size.
+        Correct a SCORPIO NIR image's noise by using its reference pixels. 
+
+        The methodology used in this primitive is based on Robberto 2014,
+        "On the Reference Pixel Correction of NIRCam Detectors" and his IDL
+        code, corrector.pro.
+
+        Robberto 2014:
+            https://www.stsci.edu/files/live/sites/www/files/home/jwst/documentation/technical-documents/_documents/JWST-STScI-003852.pdf
+        corrector.pro IDL code: 
+            https://www.stsci.edu/~robberto/Main/Software/IDL4pipeline/
+
+        Note, SCORPIO's reference pixels are laid out very specifically. Even
+        the "full" image size is smaller than the size of the detector.
 
         Parameters
         ----------
@@ -439,8 +448,9 @@ class ScorpioNearIR(Scorpio, NearIR):
         Kosarev and Pantos algorithm. This assumes that the data to be 
         filtered/smoothed has been sampled evenly.
 
-        This smooting algorithm was copied from pyNRC, which was adapted from
-        M. Robberto's IDL code. No changes have been made to the pyNRC code.
+        This smoothing algorithm was copied from pyNRC, which was adapted from
+        M. Robberto's IDL code, optimal_smooth_fft.pro. No changes have been
+        made to the pyNRC code.
 
         This code was accessed between October and December 2020. 
 
