@@ -121,7 +121,11 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 
 
-
+    def referencePixelsCorrect(self, adinputs=None, **params):
+        adinputs = self.subtractReferencePixels(adinputs, 
+                    **self._inherit_params(params, "subtractReferencePixels"))
+        adinputs = self.trimReferencePixels(adinputs, suffix=params["suffix"])
+        return adinputs
 
     def subtractReferencePixels(self, adinputs=None, **params):
         """
