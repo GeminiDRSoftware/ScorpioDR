@@ -430,9 +430,9 @@ class ScorpioNearIR(Scorpio, NearIR):
             # Get the keywords for all sections to be trimmed.
             datasec_kw = ad._keyword_for('data_section')
             darksec_kw = ad._keyword_for('dark_section')
-            refpixt_kw = ad._keyword_for('ref_sec_top')
-            refpixb_kw = ad._keyword_for('ref_sec_bot')
-            refpixs_kw = ad._keyword_for('ref_sec_side')
+            refsect_kw = ad._keyword_for('ref_sec_top')
+            refsecb_kw = ad._keyword_for('ref_sec_bot')
+            refsecs_kw = ad._keyword_for('ref_sec_side')
 
             all_datasecs = ad.data_section()
 
