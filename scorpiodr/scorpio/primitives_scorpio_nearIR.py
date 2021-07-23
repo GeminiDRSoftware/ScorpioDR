@@ -438,11 +438,16 @@ class ScorpioNearIR(Scorpio, NearIR):
 
             for ext, datasec in zip(ad, all_datasecs):
                 # Trim SCI, VAR, DQ arrays
-                ext.reset(ext.nddata[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
+                #ext.reset(ext.nddata[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
 
                 # And OBJMASK (if it exists)
-                if hasattr(ext, 'OBJMASK'):
-                    ext.OBJMASK = ext.OBJMASK[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+                #if hasattr(ext, 'OBJMASK'):
+                #    ext.OBJMASK = ext.OBJMASK[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+
+                # Temporarily use this to trim the arrays
+                ext.data = ext.data[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+                ext.variance = ext.variance[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+                ext.mask = ext.mask[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
 
                 # Update the data section keywords in the header
                 sections, new_sections = gt.map_data_sections_to_trimmed_data(datasec)
