@@ -32,21 +32,28 @@ class ScorpioNearIR(Scorpio, NearIR):
 
     def detectJumps(self, adclass=None, **params):
         """
+        Two-Point difference method for finding outliers in a 3-D data array.
+
+        The scheme used in this variation of the method uses numpy array methods
+        to compute first differences and find the max outlier in each pixel
+        while still working in the full 3-D data array. This makes detection of
+        the first outlier very fast. We then iterate pixel-by-pixel over only
+        those pixels that are already known to contain an outlier, to look for
+        any additional outliers and set the appropriate DQ mask for all outliers
+        in the pixel.
+
+        This function requires at least three good groups in the data ramp.
+
         This function has been modified from its original location, here:
         https://github.com/spacetelescope/stcal
-        Accessed February 2021-.
+        Accessed June 2021-
 
-        The method used in this function is based on the method by Anderson & Gordon, 2011, which can be found here: https://iopscience.iop.org/article/10.1086/662593
+        The two-point difference method used in this function is based on the
+        method by Anderson & Gordon, 2011: 
+            https://iopscience.iop.org/article/10.1086/662593
 
-        Two-Point Difference method for finding outliers in a 3-D ramp data array.
-        The scheme used in this variation of the method uses numpy array methods
-        to compute first-differences and find the max outlier in each pixel while
-        still working in the full 3-D data array. This makes detection of the first
-        outlier very fast. We then iterate pixel-by-pixel over only those pixels
-        that are already known to contain an outlier, to look for any additional
-        outliers and set the appropriate DQ mask for all outliers in the pixel.
-        This is MUCH faster than doing all the work on a pixel-by-pixel basis.
-
+        TODO: add AURA lciensing info (https://github.com/spacetelescope/stcal/blob/main/LICENSE)
+    
         Parameters
         ----------
         suffix: str
@@ -62,12 +69,13 @@ class ScorpioNearIR(Scorpio, NearIR):
                 ngroups, nrows, ncols = ext.data.shape
                 ndiffs = ngroups - 1
 
-                # Square the read noise values, for use later
-                read_noise = read_noise ** 2
+                # Get the read noise array and square it, for use later
+                read_noise = gt.array_from_descriptor_value(ext, "read_noise")
+                read_noise_2 = read_noise ** 2
 
-                # Set the saturated values and pixels flagged as DO_NOT_USE in
-                # the input data array to NaN, so they don't get used in any of
-                # the subsequent calculations.
+                # Set saturated values and pixels flagged as bad pixels in the
+                # input data array to NaN, so they don't get used in any of the
+                # subsequent calculations.
                 ext.data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
                 ext.data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
 
@@ -114,10 +122,32 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # Reset sigma to exclude pixels with both readnoise and signal=0
                 sigma_0_pixels = np.where(sigma == 0.)
                 if len(sigma_0_pixels[0] > 0):
-                    log.debug(f'Twopt found {len(sigma_0_pixels[0])} pixels with sigma=0')
-                    log.debug('which will be reset so that no jump will be detected.')
+                    #log.debug(f'Twopt found {len(sigma_0_pixels[0])} pixels with sigma=0')
+                    #log.debug('which will be reset so that no jump will be detected.')
                     huge_num = np.finfo(np.float32).max
                     sigma[sigma_0_pixels] = huge_num
+
+                # Compute distance of each sample from the median in units of
+                # sigma; note that the use of "abs" means we'll detect positive
+                # and negative outliers.
+                # ratio is a 2D array with the units of sigma deviation of the
+                # difference from the median.
+                ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
+                ratio3d = np.reshape(ratio, (nrows, ncols, ndiffs))
+
+                # Get the group index for each pixel of the largest
+                # non-saturated group, assuming the indices are sorted. 2 is
+                # subtracted from ngroups because we are using differences
+                # and there is one less difference than the number of groups.
+                # This is a 2D array.
+                max_value_index = ngroups - 2 - number_sat_groups
+
+        return adinputs
+
+
+
+
+
 
                 
 
