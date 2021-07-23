@@ -12,7 +12,7 @@ class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
 class referencePixelsCorrectConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_refpixelsCorrected", optional=True)
 
-class subtractReferencePixelsConfig(config.config):
+class subtractReferencePixelsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_refpixelsSubtracted", optional=True)
 
 class trimReferencePixelsConfig(config.Config):
