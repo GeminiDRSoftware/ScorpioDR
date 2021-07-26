@@ -30,7 +30,7 @@ class ScorpioNearIR(Scorpio, NearIR):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR)
 
-    def detectJumps(self, adclass=None, **params):
+    def detectJumps(self, adinputs=None, **params):
         """
         Two-Point difference method for finding outliers in a 3-D data array.
 
@@ -81,7 +81,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Compute first differences of adjacent groups up the ramp.
                 # Note: roll the ngroups axis of data array to the end, to make
-                # memory axxess to the values for a given pixel faster.
+                # memory access to the values for a given pixel faster.
                 # New form of the array has dimensions [nrows, ncols, ngroups].
                 first_diffs = np.diff(np.rollaxis(ext.data, axis=0, start=3), axis=2)
                 positive_first_diffs = np.abs(first_diffs)
@@ -100,7 +100,8 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Here we sort the 3D array along the last axis, which is the
                 # group axis. np.argsort returns a 3D array with the last axis
-                # containing the indices that would yield the groups in order.
+                # containing the indices that would yield the groups/diffs in
+                # order.
                 sort_index = np.argsort(positive_first_diffs)
 
                 # median_diffs is a 2D array with the clipped median of each pixel
