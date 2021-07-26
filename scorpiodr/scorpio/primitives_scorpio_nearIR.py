@@ -105,7 +105,9 @@ class ScorpioNearIR(Scorpio, NearIR):
                 sort_index = np.argsort(positive_first_diffs)
 
                 # median_diffs is a 2D array with the clipped median of each pixel
-                median_diffs = self._get_clipped_median_array(ndiffs, number_sat_groups, first_diffs, sort_index)
+                median_diffs = self._get_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
+
+                # ----------
 
                 # Currently we do not have a keyword for nframes, the number of samples
                 # averaged together into each frame. 
@@ -478,6 +480,51 @@ class ScorpioNearIR(Scorpio, NearIR):
             ad.update_filename(suffix=sfx, strip=True)
         
         return adinputs
+
+    def _get_clipped_median(self, num_differences, diffs_to_ignore, differences, sorted_index):
+        """
+        This routine will return the clipped median for the input array or
+        pixel. It will ignore the input number of largest differences. At a
+        minimum this is at least one plus the number of saturated values, to
+        avoid the median being biased by a cosmic ray. As cosmic rays are found,
+        the diff_to_ignore will increase.
+        """
+
+        # Ignore largest value and number of CRs found when finding new median
+        # Check to see if this is a 2D array or 1D
+        if sorted_index.ndim > 1:
+            # Get the index of the median value always excluding the highest
+            # value. In addition, decrease the index by 1 for every two
+            # diffs_to_ignore, these will be saturated values in this case.
+            row, col = np.indices(diffs_to_ignore.shape)
+            pixel_med_index = sorted_index[row, col, (num_differences - (diffs_to_ignore[row, col] + 1)) // 2]
+            pixel_med_diff = differences[row, col, pixel_med_index]
+
+            # For pixels with an even number of differences the median is the
+            # mean of the two central values. So we need to get the value of the
+            # other central difference one lower in the sorted index than the
+            # one found above.
+            even_group_rows, even_group_cols = np.where((num_differences - diffs_to_ignore - 1) % 2 == 0)
+            pixel_med_index2 = np.zeros_like(pixel_med_index)
+            pixel_med_index2[even_group_rows, even_group_cols] = \
+                sorted_index[even_group_rows, even_group_cols, 
+                             (num_differences - (diffs_to_ignore[even_group_rows, even_group_cols] + 3)) // 2 ]
+
+            # Average together the two central values
+            pixel_med_diff[even_group_rows, even_group_cols] = (
+                pixel_med_diff[even_group_rows, even_group_cols] +
+                differences[even_group_rows, even_group_cols, pixel_med_index2[even_group_rows, even_group_cols]]) / 2.0
+
+        # The 1-D array case is a lot simpler
+        else:
+            pixel_med_index = sorted_index[int(((num_differences - 1 - diffs_to_ignore) / 2))]
+            pixel_med_diff = differences[pixel_med_index]
+            if (num_differences - diffs_to_ignore - 1) % 2 == 0:    # even number of differences
+                pixel_med_index2 = sorted_index[int((num_differences - 1 - diffs_to_ignore) / 2) - 1]
+                pixel_med_diff = (pixel_med_diff + differences[pixel_med_index2]) / 2.0
+
+        return pixel_med_diff
+
 
     def _smoothFFT(self, data, delt, first_deriv=False, second_deriv=False):
         """
