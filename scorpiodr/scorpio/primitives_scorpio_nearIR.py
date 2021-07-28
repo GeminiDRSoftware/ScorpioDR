@@ -14,7 +14,6 @@ from . import parameters_scorpio_nearIR
 from recipe_system.utils.decorators import parameter_override
 
 import numpy as np
-import sys
 # ------------------------------------------------------------------------------
 
 @parameter_override
@@ -42,21 +41,51 @@ class ScorpioNearIR(Scorpio, NearIR):
         any additional outliers and set the appropriate DQ mask for all outliers
         in the pixel.
 
-        This function requires at least three good groups in the data ramp.
+        This function was copied and modified from stcal. The code was accessed
+        between June and July 2021.
 
-        This function has been modified from its original location, here:
-        https://github.com/spacetelescope/stcal
-        Accessed June 2021-
+        stcal:
+            https://github.com/spacetelescope/stcal
 
         The two-point difference method used in this function is based on the
         method by Anderson & Gordon, 2011: 
             https://iopscience.iop.org/article/10.1086/662593
 
         TODO:
-        - add AURA lciensing info (https://github.com/spacetelescope/stcal/blob/main/LICENSE)
         - add nframes input
         - add rej_threshold input
     
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
         Parameters
         ----------
         suffix: str
@@ -208,13 +237,6 @@ class ScorpioNearIR(Scorpio, NearIR):
                         np.bitwise_or(ext.mask[1:, row1[j], col1[j]], DQ.cosmic_ray * np.invert(pixel_cr_mask))
 
         return adinputs
-
-
-
-
-
-
-                
 
     def referencePixelsCorrect(self, adinputs=None, **params):
         adinputs = self.subtractReferencePixels(adinputs, 
@@ -550,6 +572,43 @@ class ScorpioNearIR(Scorpio, NearIR):
         minimum this is at least one plus the number of saturated values, to
         avoid the median being biased by a cosmic ray. As cosmic rays are found,
         the diff_to_ignore will increase.
+
+        This function was copied, without modification from stcal. The code was
+        accessed between June and July 2021.
+
+        stcal:
+            https://github.com/spacetelescope/stcal
+
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
         """
 
         # Ignore largest value and number of CRs found when finding new median
@@ -597,18 +656,40 @@ class ScorpioNearIR(Scorpio, NearIR):
         Kosarev and Pantos algorithm. This assumes that the data to be 
         filtered/smoothed has been sampled evenly.
 
-        This smoothing algorithm was copied from pyNRC, which was adapted from
-        M. Robberto's IDL code, optimal_smooth_fft.pro. No changes have been
-        made to the pyNRC code.
+        If first_deriv is set, then returns two results.
+        If second_deriv is set, then returns three results.
 
-        This code was accessed between October and December 2020. 
+        This function was copied, without modification, from pyNRC. The code
+        was accessed between October and December 2020.
 
         pyNRC:
             https://github.com/JarronL/pynrc
         This code specifically:
             https://github.com/JarronL/pynrc/blob/master/pynrc/reduce/ref_pixels.py
-        M. Robberto's code:
-            http://www.stsci.edu/~robberto/Main/Software/IDL4pipeline/
+
+        License
+        -------
+        MIT License
+
+        Copyright (c) 2018, Jarron Leisenring
+
+        Permission is hereby granted, free of charge, to any person obtaining a copy
+        of this software and associated documentation files (the "Software"), to deal
+        in the Software without restriction, including without limitation the rights
+        to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+        copies of the Software, and to permit persons to whom the Software is
+        furnished to do so, subject to the following conditions:
+
+        The above copyright notice and this permission notice shall be included in all
+        copies or substantial portions of the Software.
+
+        THIS SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+        IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+        FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+        AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+        LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+        OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+        SOFTWARE.
 
         Parameters
         ----------
