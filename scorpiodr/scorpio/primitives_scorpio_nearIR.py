@@ -236,6 +236,9 @@ class ScorpioNearIR(Scorpio, NearIR):
                     ext.mask[1:, row1[j], col1[j]] = \
                         np.bitwise_or(ext.mask[1:, row1[j], col1[j]], DQ.cosmic_ray * np.invert(pixel_cr_mask))
 
+            # Update the filename.
+            ad.update_filename(suffix=sfx, strip=True)
+
         return adinputs
 
     def referencePixelsCorrect(self, adinputs=None, **params):
