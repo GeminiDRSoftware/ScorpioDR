@@ -29,7 +29,7 @@ class ScorpioNearIR(Scorpio, NearIR):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR)
 
-    def detectJumps(self, adinputs=None, **params):
+    def flagCosmicRaysFromNDRs(self, adinputs=None, **params):
         """
         Two-Point difference method for finding outliers in a 3-D data array.
 
@@ -166,7 +166,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Compute distance of each sample from the median in units of
                 # sigma; note that the use of "abs" means we'll detect positive
-                # and negative outliers. ratio is a 2D array with the units of
+                # and negative outliers. ratio is a 3D array with the units of
                 # sigma deviation of the difference from the median.
                 ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
 
