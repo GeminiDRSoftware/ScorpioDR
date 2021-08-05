@@ -29,6 +29,51 @@ class ScorpioNearIR(Scorpio, NearIR):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR)
 
+    def determineSlope(self, adinputs=None, **params):
+        """
+        TODO:
+        - add frame_time and group_time to inputs rather than direct header access
+            - group_time is the time between groups of frames, in seconds
+                (group = num_frames + num_skips)
+            - frame_time is the time to read one frame, in seconds
+            - until the grouping and skipping is decided on, group_time is the same as frame_time
+            - frame_time is INTTIME
+
+        Parameters
+        ----------
+        suffix: str
+            suffix to be added to output files
+        """
+        slope_diff_cutoff = 1.e-5
+
+        for ad in adinputs:
+            for e, ext in enumerate(ad):
+                # Get data from this extension.
+                input_var_sect_2 = ext.variance ** 2
+                gdq_sect = ext.mask
+                readnoise_sect = gt.array_from_descriptor_value(ext, 'read_noise')[0]
+                gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0]
+                frame_time = ext.hdr['INTTIME']
+                group_time = ext.hdr['INTTIME']
+                nframes = 1
+                max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
+
+                # These will be updated in the loop.
+                prev_slope_sect = (ext.data[1, :, :] - ext.data[0, :, :]) / group_time
+                prev_fit = ext.data.copy()
+
+                iter = 0
+                done = False
+                while not done:
+                    (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
+                     cr_sect, cr_var_sect) = \
+                        self._compute_slope(ext.data, input_var_sect_2, gdq_sect,
+                                            readnoise_sect, gain_sect,
+                                            prev_fit, prev_slope_sect,
+                                            frame_time, group_time, nframes,
+                                            max_num_cr, DQ.saturated, DQ.cosmic_ray)
+
+
     def flagCosmicRaysFromNDRs(self, adinputs=None, **params):
         """
         Two-Point difference method for finding outliers in a 3-D data array.
@@ -568,6 +613,213 @@ class ScorpioNearIR(Scorpio, NearIR):
         
         return adinputs
 
+    def _compute_slope(self, data_sect, input_var_sect, gdq_sect,
+                       readnoise_sect, gain_sect, prev_fit, prev_slope_sect,
+                       frame_time, group_time, nframes, max_num_cr,
+                       saturated_flag, jump_flag):
+        """
+        Set up the call to fit a slope to ramp data.
+
+        This loops over the number of cosmic rays (jumps). That is, all the
+        ramps with no cosmic rays are processed first, then all the ramps with
+        one cosmic ray, then with two, etc.
+
+        Parameters
+        ----------
+        data_sect : 3-D ndarray; shape (ngroups, ny, nx)
+            The ramp data for one extension of an ad object. This may be a
+            subarray in detector coordinates, but covering all groups.
+        
+        input_var_sect: 3-D ndarray; shape (ngroups, ny, nx)
+            The square of the input variance array, matching data_sect.
+        
+        gdq_sect : 3-D ndarray; shape (ngrops, ny, nx)
+            The group data quality array. This may be a subarray, matching
+            data_sect.
+        
+        readnoise_sect : 2-D ndarray; shape (ny, nx)
+            The read noise in electrons at each detector pixel (i.e. not a
+            ramp). This may be a subarray, similar to data_sect.
+        
+        gain_sect : 2-D ndarray or None; shape (ny, nx)
+            The gain in electrons per DN at each detector pixel (i.e. not a
+            ramp). This may be a subarray, matching readnoise_sect. If gain_sect
+            is None, a value of 1 will be assumed.
+        
+        prev_fit : 3-D ndarray; shape (ngroups, ny, nx)
+            The previous fit (intercept, slope, cosmic-ray amplitudes)
+            evaluated for each pixel in the subarray.  data_sect itself may be
+            used for the first iteration.
+        
+        prev_slope_sect : 2-D ndarray; shape (ny, nx)
+            An estimate (e.g. from a previous iteration) of the slope at each
+            pixel, in electrons per second.  This may be a subarray, similar to
+            data_sect.
+        
+        frame_time : float
+            The time to read one frame, in seconds.
+        
+        group_time : float
+            Time increment between groups, in seconds.
+        
+        nframes : int
+            Number of frames that were averaged together to make a group.
+            This value does not include the number (if any) of skipped frames.
+        
+        max_num_cr : non-negative int
+            The maximum number of cosmic rays that should be handled.
+        
+        saturated_flag : int
+            DQ_definitions['saturated']
+        
+        jump_flag : int
+            DQ_definitions['cosmic_ray']
+
+        Returns
+        -------
+        tuple : (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
+                 cr_sect, cr_var_sect)
+            intercept_sect is a 2-D ndarray (ny, nx), the intercept of the ramp
+            at each pixel of data_sect.
+
+            int_var_sect is a 2-D ndarray (ny, nx), the variance of the
+            intercept at each pixel of data_sect.
+
+            slope_sect is a 2-D ndarray (ny, nx), the ramp slope at each pixel
+            of data_sect.
+
+            slope_var_sect is a 2-D ndarray (ny, nx), the variance of the slope
+            at each pixel of data_sect.
+
+            cr_sect is a 3-D ndarray (ny, nx, cr_dimen), the amplitude of each
+            cosmic ray at each pixel of data_sect. cr_dimen is max_num_cr or 1,
+            whichever is larger.
+
+            cr_var_sect is a 3-D ndarray (ny, nx, cr_dimen), the variance of
+            each cosmic ray amplitude.
+        """
+        cr_flagged = np.empty(data_sect.shape, dtype=np.uint8)
+        cr_flagged[:] = np.where(np.bitwise_and(gdq_sect, jump_flag), 1, 0)
+
+        # If a pixel is flagged as a jump in the first group, we can't fit to
+        # the ramp, because a matrix that we need to invert would be singular.
+        # If there's only one group, we can't fit a ramp to it anyway, so
+        # at this point we wouldn't need to be concerned about a jump. If
+        # there is more than one group, just ignore any jump in the first group.
+        if data_sect.shape[0] > 1:
+            cr_flagged[0, :, :] = 0
+
+        # Sum over groups to get an (ny, nx) image of the number of cosmic
+        # rays in each pixel, accumulated over the ramp.
+        sum_flagged = cr_flagged.sum(axis=0, dtype=np.int32)
+
+        # If a pixel is flagged as saturated in the first or second group, we
+        # don't want to even attempt to fit a slope to the ramp for that pixel.
+        # Handle this case by setting the corresponding pixel in sum_flagged to
+        # a negative number. The test 'ncr_mask = (sum_flagged == num_cr)'
+        # will therefore never match, since num_cr is zero or larger, and the
+        # pixel will not be included in any ncr_mask.
+        mask1 = (gdq_sect[0, :, :] == saturated_flag)
+        sum_flagged[mask1] = -1
+
+        # one_group_mask flags pixels that are not saturated in the first
+        # group but are saturated in the second group (if there is a second
+        # group). For these pixels, we will assign a value to the slope
+        # image by just dividing the value in the first group by group_time.
+        if len(gdq_sect) > 1:
+            mask2 = (gdq_sect[1, :, :] == saturated_flag)
+            sum_flagged[mask2] = -1
+            one_group_mask = np.bitwise_and(mask2, np.bitwise_not(mask1))
+            del mask2
+        else:
+            one_group_mask = np.bitwise_not(mask1)
+        del mask1
+
+        # Set elements of this array to a huge value if the corresponding pixels
+        # are saturated. This is not a flag, it's a value to be added to the
+        # diagonal of the covariance matrix. 1.e20
+        saturated = np.empty(data_sect.shape, dtype=np.float64)
+        saturated[:] = np.where(np.bitwise_and(gdq_sect, saturated_flag), 1.e20, 0)
+
+        # Create arrays to be populated and then returned.
+        shape = data_sect.shape
+        dtype = data_sect.dtype
+        # Lower limit of one, in case there are no cosmic rays at all.
+        cr_dimen = max(1, max_num_cr)
+        intercept_sect = np.zeros((shape[1], shape[2]), dtype=dtype)
+        slope_sect = np.zeros((shape[1], shape[2]), dtype=dtype)
+        cr_sect = np.zeros((shape[1], shape[2], cr_dimen), dtype=dtype)
+        int_var_sect = np.zeros((shape[1], shape[2]), dtype=dtype)
+        slope_var_sect = np.zeros((shape[1], shape[2]), dtype=dtype)
+        cr_var_sect = np.zeros((shape[1], shape[2], cr_dimen), dtype=dtype)
+
+        # This takes care of the case that there's only one group, as well as
+        # pixels that are saturated in the second but not the first group.
+        if one_group_mask.any():
+            slope_sect[one_group_mask] = data_sect[0, one_group_mask] / group_time
+        del one_group_mask
+
+        # Fit slopes for all pixels that have no cosmic ray hits anywhere in
+        # the ramp, then fit slopes with one CR hit, then with two, etc.
+        for num_cr in range(max_num_cr + 1):
+            ngroups = len(data_sect)
+            ncr_mask = (sum_flagged == num_cr)
+
+            # Number of detector pixels flagged with num_cr CRs within the ramp.
+            nz = ncr_mask.sum(dtype=np.int32)
+            if nz <= 0:
+                continue
+
+            # ramp_data will be a ramp with a 1-D array of pixels copied out
+            # of data_sect.
+            ramp_data = np.empty((ngroups, nz), dtype=data_sect.dtype)
+            input_var_data = np.empty((ngroups, nz), dtype=data_sect.dtype)
+            prev_fit_data = np.empty((ngrooups, nz), dtype=prev_fit.dtype)
+            prev_slope_data = np.empty(nz, dtype=prev_slope_sect.dtype)
+            prev_slope_data[:] = prev_slope_sect[ncr_mask]
+            readnoise = np.empty(nz, dtype=readnoise_sect.dtype)
+            readnoise[:] = readnoise_sect[ncr_mask]
+            if gain_sect is None:
+                gain = None
+            else:
+                gain = np.empty(nz, dtype=gain_sect.dtype)
+                gain[:] = gain_sect[ncr_mask]
+            cr_flagged_2d = np.empty((ngroups, nz), dtype=cr_flagged.dtype)
+            saturated_data = np.empty((ngroups, nz), dtype=prev_fit.dtype)
+            for k in range(ngroups):
+                ramp_data[k] = data_sect[k][ncr_mask]
+                input_var_data[k] = input_var_sect[k][ncr_mask]
+                prev_fit_data[k] = prev_fit[k][ncr_mask]
+                cr_flagged_2d[k] = cr_flagged[k][ncr_mask]
+                # This is for clobbering saturated pixels.
+                saturated_data[k] = saturated[k][ncr_mask]
+
+            (result, variances) = \
+                self._gls_fit(ramp_data, prev_fit_data, prev_slope_data,
+                              readnoise, gain, frame_time, group_time,
+                              nframes, num_cr, cr_flagged_2d, saturated_data)
+
+            # Copy the intercept, slope, and cosmic-ray amplitudes and their
+            # variances to the arrays to be returned.
+            # ncr_mask is a mask array that is True for each pixel that has the
+            # current number (num_cr) of cosmic rays. Thus, the output arrays
+            # are being populated here in sets, a different set of pixels
+            # with each iteration of this loop.
+            intercept_sect[ncr_mask] = result[:, 0].copy()
+            int_var_sect[ncr_mask] = variances[:, 0].copy()
+            slope_sect[ncr_mask] = result[:, 1].copy()
+            slope_var_sect[ncr_mask] = variances[:, 1].copy()
+            
+            # In this loop, i is just an index. cr_sect is populated for
+            # number of cosmic rays = 1 to num_cr, inclusive.
+            for i in range(num_cr):
+                cr_sect[ncr_mask, i] = result[:, 2 + i].copy()
+                cr_var_sect[ncr_mask, i] = variances[:, 2 + i].copy()
+
+        return (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
+                cr_sect, cr_var_sect)
+
+
     def _get_clipped_median(self, num_differences, diffs_to_ignore, differences, sorted_index):
         """
         This routine will return the clipped median for the input array or
@@ -649,6 +901,27 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         return pixel_med_diff
 
+    def _get_max_num_cr(gdq_cube, jump_flag):
+        """
+        Find the maximum number of cosmic-ray hits in any one pixel.
+
+        Parameters
+        ----------
+        gdq_cube : ndarray
+            The group data quality array, 3-D flag
+        jump_flag : int
+            The data quality flag indicating a cosmic-ray hit.
+
+        Returns
+        -------
+        max_num_cr : int
+            The maximum number of cosmic-ray hits for any pixel.
+        """
+        cr_flagged = np.empty(gdq_cube.shape, dtype=np.uint8)
+        cr_flagged[:] = np.where(np.bitwise_and(gdq_cube, jump_flag), 1, 0)
+        max_num_cr = cr_flagged.sum(axis=0, dtype=np.int32).max()
+
+        return max_num_cr
 
     def _smoothFFT(self, data, delt, first_deriv=False, second_deriv=False):
         """
