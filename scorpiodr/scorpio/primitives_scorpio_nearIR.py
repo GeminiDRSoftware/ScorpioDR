@@ -14,6 +14,8 @@ from . import parameters_scorpio_nearIR
 from recipe_system.utils.decorators import parameter_override
 
 import numpy as np
+import numpy.linalg as la
+import sys
 # ------------------------------------------------------------------------------
 
 @parameter_override
@@ -38,13 +40,23 @@ class ScorpioNearIR(Scorpio, NearIR):
             - frame_time is the time to read one frame, in seconds
             - until the grouping and skipping is decided on, group_time is the same as frame_time
             - frame_time is INTTIME
+            - set the ad's data extension to the slope image for returning
 
         Parameters
         ----------
         suffix: str
             suffix to be added to output files
         """
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        sfx = params["suffix"]
+        
         slope_diff_cutoff = 1.e-5
+
+        # Lower and upper limits of the number of iterations that will be done
+        # by determineSlope.
+        min_iter = 1
+        max_iter = 1
 
         for ad in adinputs:
             for e, ext in enumerate(ad):
@@ -72,6 +84,34 @@ class ScorpioNearIR(Scorpio, NearIR):
                                             prev_fit, prev_slope_sect,
                                             frame_time, group_time, nframes,
                                             max_num_cr, DQ.saturated, DQ.cosmic_ray)
+                    iter += 1
+                    if iter >= max_iter:
+                        done = True
+                    else:
+                        # If there are pixels with zero or negative variance,
+                        # ignore them when taking the difference between the
+                        # slopes computed in the current and previous
+                        # iterations.
+                        slope_diff = np.where(slope_var_sect > 0., prev_slope_sect - slope_sect, 0.)
+                        max_slope_diff = np.abs(slope_diff).max()
+
+                        if iter >= min_iter and max_slope_diff < slope_diff_cutoff:
+                            done = True
+
+                        current_fit = evaluate_fit(intercept_sect, slope_sect, cr_sect,
+                                                   frame_time, group_time, gdq_sect, DQ.cosmic_ray)
+
+                        prev_fit = positive_fit(current_fit)    # use for next iteration
+                        del current_fit
+
+                        prev_slope_sect = slope_sect.copy()
+
+                ext.data = slope_sect
+
+            # Update the filename.
+            ad.update_filename(suffix=sfx, strip=True)
+
+        return adinputs
 
 
     def flagCosmicRaysFromNDRs(self, adinputs=None, **params):
@@ -774,7 +814,7 @@ class ScorpioNearIR(Scorpio, NearIR):
             # of data_sect.
             ramp_data = np.empty((ngroups, nz), dtype=data_sect.dtype)
             input_var_data = np.empty((ngroups, nz), dtype=data_sect.dtype)
-            prev_fit_data = np.empty((ngrooups, nz), dtype=prev_fit.dtype)
+            prev_fit_data = np.empty((ngroups, nz), dtype=prev_fit.dtype)
             prev_slope_data = np.empty(nz, dtype=prev_slope_sect.dtype)
             readnoise = np.empty(nz, dtype=readnoise_sect.dtype)
 
@@ -822,7 +862,81 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         return (intercept_sect, int_var_sect, slope_sect, slope_var_sect, cr_sect, cr_var_sect)
 
+    def _evaluate_fit(self, intercept_sect, slope_sect, cr_sect,
+                      frame_time, group_time, gdq_sect, jump_flag):
+        """
+        Evaluate the fit (intercept, slope, cosmic-ray amplitudes).
 
+        Parameters
+        ----------
+        intercept_sect : 2-D ndarray
+            The intercept of the ramp at each pixel of data_sect (one of the
+            arguments to determine_slope).
+
+        slope_sect : 2-D ndarray
+            The ramp slope at each pixel of data_sect.
+
+        cr_sect : 3-D ndarray
+            The amplitude of each cosmic ray at each pixel of data_sect.
+
+        frame_time : float
+            The time to read one frame, in seconds.
+
+        group_time : float
+            Time increment between groups, in seconds.
+
+        gdq_sect : 3-D ndarray; indices:  group, y, x
+            The group data quality array.  This may be a subarray, matching
+            data_sect.
+
+        jump_flag : int
+            The data quality flag indicating a cosmic-ray hit.
+
+        Returns
+        -------
+        fit_model : 3-D ndarray, shape (ngroups, ny, nx)
+            This is the same sahpe as data_sect, and if the fit is good,
+            fit_model and data_sect should not differ by much.
+        """
+
+        shape_3d = gdq_sect.shape    # the ramp, (ngroups, ny, nx)
+        ngroups = gdq_sect.shape[0]
+
+        # This array is also created in the function _compute_slope.
+        cr_flagged = np.empty(shape_3d, dtype=np.uint8)
+        cr_flagged[:] = np.where(np.bitwise_and(gdq_sect, jump_flag), 1, 0)
+
+        sum_flagged = cr_flagged.sum(axis=0, dtype=np.int32)
+
+        # local_max_num_cr is local to this function. It may be smaller than
+        # the max_num_cr that's computed in determine_slope, and it can even be
+        # zero.
+        local_max_num_cr = sum_flagged.max()
+        del sum_flagged
+
+        # The independent variable, in seconds at each image pixel.
+        ind_var = np.zeros(shape_3d, dtype=np.float64)
+        M = round(group_time / frame_time)
+        iv = np.arange(ngroups, dtype=np.float64) * group_time + frame_time * (M + 1.) / 2.
+        iv = iv.reshape((ngroups, 1, 1))
+        ind_var += iv
+
+        # No cosmic rays yet; these will be accounted for below.
+        # ind_var has a different shape (ngroups, ny, nx) from slope_sect and
+        # intercept_sect, but their last dimensions are the same.
+        fit_model = ind_var * slope_sect + intercept_sect
+
+        # heaviside and cr_flagged have shape (ngroups, ny, nx).
+        heaviside = np.zeros(shape_3d, dtype=np.float64)
+        cr_cumsum = cr_flagged.cumsum(axis=0, dtype=np.int16)
+
+        # Add an offset for each cosmic ray.
+        for n in range(local_max_num_cr):
+            heaviside[:] = np.where(cr_cumsum > n, 1., 0.)
+            fit_model += (heaviside * cr_sect[:, :, n])
+
+        return fit_model
+    
     def _get_clipped_median(self, num_differences, diffs_to_ignore, differences, sorted_index):
         """
         This routine will return the clipped median for the input array or
@@ -904,7 +1018,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         return pixel_med_diff
 
-    def _get_max_num_cr(gdq_cube, jump_flag):
+    def _get_max_num_cr(self, gdq_cube, jump_flag):
         """
         Find the maximum number of cosmic-ray hits in any one pixel.
 
@@ -1004,7 +1118,7 @@ class ScorpioNearIR(Scorpio, NearIR):
             The variance for the intercept, slope, and for the amplitude of
             each cosmic ray that detected.
         """
-        M = float(nframes_used)
+        M = float(nframes)
         
         ngroups = ramp_data.shape[0]
         nz = ramp_data.shape[1]
@@ -1123,6 +1237,34 @@ class ScorpioNearIR(Scorpio, NearIR):
         
         return (fitparam2d, fitparam_uncs)
 
+    def _positive_fit(self, current_fit):
+        """
+        Replace zero and negative values with a positive number.
+
+        Ramp data should be positive, since they are based on counts. The fit to
+        a ramp can go negative, however, due e.g. to extrapolation beyond where
+        the data are saturated. To avoid negative elements in the covariance
+        matrix (populated in part with the fit to the ramp), this function
+        replaces zero or negative values in the fit with a positive number.
+
+        Parameters
+        ----------
+        current_fit : 3-D ndarray, shape (ngroups, ny, nx)
+            The fit returned by _evaluate_fit.
+
+        Returns
+        -------
+        current_fit : 3-D ndarray, shape (ngroups, ny, nx)
+            This is the same as the input current_fit, except that zero and
+            negative values will have been replaced by a positive value.
+        """
+
+        # This is a value to replace zero or negative values in a fit, to make
+        # all values of the fit positive and to give low weight where the fit
+        # was zero or negative.
+        fit_must_be_positive = 1.e10
+
+        return np.where(current_fit <= 0., fit_must_be_positive, current_fit)
 
     def _smoothFFT(self, data, delt, first_deriv=False, second_deriv=False):
         """

@@ -5,7 +5,7 @@ from gempy.library import config
 from geminidr.gemini import parameters_gemini
 #from geminidr.core import parameters_ccd  # import core pkgs as needed.
 
-class determinSlopeConfig(config.Config):
+class determineSlopeConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_slopeDetermined", optional=True)
 
 class flagCosmicRaysFromNDRsConfig(config.Config):
