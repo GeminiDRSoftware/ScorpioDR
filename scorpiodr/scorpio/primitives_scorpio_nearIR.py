@@ -33,14 +33,115 @@ class ScorpioNearIR(Scorpio, NearIR):
 
     def determineSlope(self, adinputs=None, **params):
         """
-        TODO:
-        - add frame_time and group_time to inputs rather than direct header access
-            - group_time is the time between groups of frames, in seconds
-                (group = num_frames + num_skips)
-            - frame_time is the time to read one frame, in seconds
-            - until the grouping and skipping is decided on, group_time is the same as frame_time
-            - frame_time is INTTIME
-            - set the ad's data extension to the slope image for returning
+        Iteratively fit a slope, intercept, and cosmic rays to a ramp.
+
+        This function fits a ramp, possibly with discontinuities (cosmic-ray
+        hits), to a 3-D data "cube" with shape (number of groups, number of
+        pixels high, number of pixels wide).  The fit will be done multiple
+        times, with the previous fit being used to assign weights (via the
+        covariance matrix) for the current fit.  The iterations stop either
+        when the maximum number of iterations has been reached or when the
+        maximum difference between the previous fit and the current fit is
+        below a cutoff.  This function calls compute_slope and evaluate_fit.
+        
+        compute_slope creates arrays for the slope, intercept, and cosmic-ray
+        amplitudes (the arrays that will be returned by determine_slope).  Then
+        it loops over the number of cosmic rays, from 0 to max_num_cr
+        inclusive.  Within this loop, compute_slope copies to temporary arrays
+        the ramp data for all the pixels that have the current number of cosmic
+        ray hits, calls gls_fit to compute the fit, then copies the results
+        of the fit (slope, etc.) to the output arrays for just those pixels.
+        The input to gls_fit is ramp data for a subset of pixels (nz in number)
+        that all have the same number of cosmic-ray hits.  gls_fit solves
+        matrix equations (one for each of the nz pixels) of the form:
+            
+            y = x * p
+        
+        where y is a column vector containing the observed data values in
+        electrons for each group (the length of y is ngroups, the number of
+        groups); x is a matrix with ngroups rows and 2 + num_cr columns, where
+        num_cr is the number of cosmic rays being included in the fit; and p
+        is the solution, a column vector containing the intercept, slope, and
+        the amplitude of each of the num_cr cosmic rays.  The first column of
+        x is all ones, for fitting to the intercept.  The second column of x
+        is the time (seconds) at the beginning of each group.  The remaining
+        num_cr columns (if num_cr > 0) are Heaviside functions, 0 for the
+        first rows and 1 for all rows at and following the group containing a
+        cosmic-ray hit (each row corresponds to a group).  There will be one
+        such column for each cosmic ray, so that the cosmic rays will be fit
+        independently of each other.  Whether a cosmic ray hit the detector
+        during a particular group was determined by a previous step, and the
+        affected groups are flagged in the group data quality array.  In order
+        to account for the variance of each observed value and the covariance
+        between them (since they're measurements along a ramp), the solution
+        is computed in this form (the @ sign represents matrix multiplication):
+            
+            (xT @ C^-1 @ x)^-1 @ [xT @ C^-1 @ y]
+        
+        where C is the ngroups by ngroups covariance matrix, ^-1 means matrix
+        inverse, and xT is the transpose of x.
+        
+        Summary of the notation:
+        
+        data_sect is 3-D, (ngroups, ny, nx); this is the ramp of science data.
+        cr_flagged is 3-D, (ngroups, ny, nx); 1 indicates a cosmic ray, e.g.:
+            cr_flagged = np.where(np.bitwise_and(gdq_sect, jump_flag), 1, 0)
+        cr_flagged_2d is 2-D, (ngroups, nz); this gives the location within
+            the ramp of each cosmic ray, for the subset of pixels (nz of them)
+            that have a total of num_cr cosmic ray hits at each pixel.  This
+            is passed to gls_fit(), which fits a slope to the ramp.
+        
+        ramp_data has shape (ngroups, nz); this will be a ramp with a 1-D
+        array of pixels copied out of data_sect.  The pixels will be those
+        that have a particular number of cosmic-ray hits, somewhere within
+        the ramp.
+        
+        Sum cr_flagged over groups to get an (ny, nx) image of the number of
+        cosmic rays (i.e. accumulated over the ramp) in each pixel.
+        sum_flagged = cr_flagged.sum(axis=0, ...)
+        sum_flagged is used to extract the nz pixels from (ny, nx) that have a
+        specified number of cosmic ray hits, e.g.:
+            for num_cr in range(max_num_cr + 1):
+                ncr_mask = (sum_flagged == num_cr)
+                nz = ncr_mask.sum(dtype=np.int32)
+                for k in range(ngroups):
+                    ramp_data[k] = data_sect[k][ncr_mask]
+                    cr_flagged_2d[k] = cr_flagged[k][ncr_mask]
+        
+        gls_fit is called for the subset of pixels (nz of them) that have
+        num_cr cosmic ray hits within the ramp, the same number for every
+        pixel.
+
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
 
         Parameters
         ----------
@@ -664,6 +765,37 @@ class ScorpioNearIR(Scorpio, NearIR):
         ramps with no cosmic rays are processed first, then all the ramps with
         one cosmic ray, then with two, etc.
 
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
         Parameters
         ----------
         data_sect : 3-D ndarray; shape (ngroups, ny, nx)
@@ -867,6 +999,37 @@ class ScorpioNearIR(Scorpio, NearIR):
         """
         Evaluate the fit (intercept, slope, cosmic-ray amplitudes).
 
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
         Parameters
         ----------
         intercept_sect : 2-D ndarray
@@ -1022,6 +1185,37 @@ class ScorpioNearIR(Scorpio, NearIR):
         """
         Find the maximum number of cosmic-ray hits in any one pixel.
 
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
         Parameters
         ----------
         gdq_cube : ndarray
@@ -1055,6 +1249,37 @@ class ScorpioNearIR(Scorpio, NearIR):
         Currently the noise model is assumed to be a combination of read and
         photon noise alone. Same technique could be used with more complex
         noise models, but then the ramp covariance matrix should be input.
+
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
 
         Parameters
         ----------
@@ -1246,6 +1471,37 @@ class ScorpioNearIR(Scorpio, NearIR):
         the data are saturated. To avoid negative elements in the covariance
         matrix (populated in part with the fit to the ramp), this function
         replaces zero or negative values in the fit with a positive number.
+
+        License
+        -------
+        Copyright (C) 2020 Association of Universities for Research in Astronomy (AURA)
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+
+            1. Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+
+            2. Redistributions in binary form must reproduce the above
+              copyright notice, this list of conditions and the following
+              disclaimer in the documentation and/or other materials provided
+              with the distribution.
+
+            3. The name of AURA and its representatives may not be used to
+              endorse or promote products derived from this software without
+              specific prior written permission.
+
+        THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
+        WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+        MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+        DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
+        INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+        BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
+        OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+        ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
+        TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
+        USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
 
         Parameters
         ----------
