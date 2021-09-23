@@ -314,8 +314,11 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         for ad in adinputs:
             for e, ext in enumerate(ad):
+                # Make a copy of the data so we don't make changes to it
+                data = ext.data.copy()
+
                 # Get data characteristics
-                ngroups, nrows, ncols = ext.data.shape
+                ngroups, nrows, ncols = data.shape
                 ndiffs = ngroups - 1
 
                 # Get the read noise array and square it, for use later
@@ -325,14 +328,14 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # Set saturated values and pixels flagged as bad pixels in the
                 # input data array to NaN, so they don't get used in any of the
                 # subsequent calculations.
-                ext.data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
-                ext.data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
 
                 # Compute first differences of adjacent groups up the ramp.
                 # Note: roll the ngroups axis of data array to the end, to make
                 # memory access to the values for a given pixel faster.
                 # New form of the array has dimensions [nrows, ncols, ngroups].
-                first_diffs = np.diff(np.rollaxis(ext.data, axis=0, start=3), axis=2)
+                first_diffs = np.diff(np.rollaxis(data, axis=0, start=3), axis=2)
                 positive_first_diffs = np.abs(first_diffs)
 
                 # sat_groups is a 3D array that is true when the group is
@@ -487,10 +490,13 @@ class ScorpioNearIR(Scorpio, NearIR):
             refpix_sec = ad.refpix_section()
 
             for e, ext in enumerate(ad):
+                # Make a copy of the data so we don't make changes to it
+                data = ext.data.copy()
+
                 # Convert any saturated or bad pixels to NaNs so they are not
                 # used in any calculations.
-                ext.data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] == np.nan
-                ext.data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] == np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] == np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] == np.nan
 
                 # Extract the horizontal reference pixel sections.
                 rpix_top_sec = refpix_sec['top'][e]
@@ -500,11 +506,11 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # plane. rpix_top and rpix_bot are lists of 3D arrays 
                 # with shape (nframes, nrows, ncols), where each array
                 # corresponds to an amplifier.
-                rpix_top = [ext.data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]
-                rpix_bot = [ext.data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
+                rpix_top = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]
+                rpix_bot = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
 
                 # These just make loop indices easier later.
-                nframes, nrows, ncols = ext.data.shape
+                nframes, nrows, ncols = data.shape
                 namps = len(rpix_top)
 
                 # Exctract the vertical reference pixel sections.
@@ -514,7 +520,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # data plane. rpix_side is a list of 3D arrays with shape
                 # (nframes, nrows, ncols). Note, these arrays do not yet
                 # correspond to amplifiers.
-                rpix_side = [ext.data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
+                rpix_side = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
 
                 # Restructure the vertical reference pixel sections into 2 
                 # sections (left and right). rpix_side_fixed is a list of 
@@ -577,7 +583,7 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                     # Subtract the delta from the data pixel sections.
                     for amp in range(len(datasec)):
-                        ext.data[frm, datasec[amp].y1:datasec[amp].y2, datasec[amp].x1:datasec[amp].x2] -= amp_deltas[amp+1]
+                        data[frm, datasec[amp].y1:datasec[amp].y2, datasec[amp].x1:datasec[amp].x2] -= amp_deltas[amp+1]
 
                 # From the time array, which is the size of the original
                 # amplifier, slice out the corresponding horizontal and vertical
@@ -695,9 +701,9 @@ class ScorpioNearIR(Scorpio, NearIR):
                     top_ref = corrector_array[:4, :]    # horizontal refpixels
                     bot_ref = corrector_array[-4:, :]   # horizontal refpixels
 
-                    data = corrector_array[512:1536, :] # active pixels and middle vertical refpixels
+                    sci = corrector_array[512:1536, :] # active pixels and middle vertical refpixels
 
-                    corrector_array = np.concatenate([top_ref, data, bot_ref], axis=0)
+                    corrector_array = np.concatenate([top_ref, sci, bot_ref], axis=0)
                     corrector_array = np.concatenate([left_ref, corrector_array, right_ref], axis=1)
 
                     assert ext.data[frm].shape == corrector_array.shape
