@@ -31,7 +31,7 @@ class ScorpioNearIR(Scorpio, NearIR):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR)
 
-    def determineSlope(self, adinputs=None, **params):
+    def calculateSignalByRegression(self, adinputs=None, **params):
         """
         Iteratively fit a slope, intercept, and cosmic rays to a ramp.
 
