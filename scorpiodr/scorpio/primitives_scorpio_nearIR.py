@@ -207,13 +207,37 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                         prev_slope_sect = slope_sect.copy()
 
+                # Create a basis for the 2D data quality array
+                temp_dq = np.zeros((gdq_sect.shape[1], gdq_sect.shape[2]), dtype=DQ.datatype)
+
+                # Replace zero or negative variances with this:
+                LARGE_VARIANCE = 1.e8
+
+                v_mask = (slope_var_sect <= 0.)
+                if v_mask.any():
+                    # Replace negative or zero variances with a large value.
+                    slope_var_sect[v_mask] = LARGE_VARIANCE
+                    # Also set a flag in the pixel dq array.
+                    temp_dq[v_mask] = DQ.bad_pixel
+                    del v_mask
+
+                # If a pixel was flagged (by an earlier step) as saturated in
+                # the first group, flag the pixel as bad.
+                s_mask = (gdq_sect[0] == DQ.saturated)
+                if s_mask.any():
+                    temp_dq[s_mask] = DQ.bad_pixel
+
+                # Compress the DQ array 3D -> 2D
+                pixel_dq = self._dq_compress_sect(gdq_sect, temp_dq)
+
                 ext.data = slope_sect
+                ext.variance = np.sqrt(slope_var_sect)
+                ext.mask = pixel_dq
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
 
         return adinputs
-
 
     def flagCosmicRaysFromNDRs(self, adinputs=None, **params):
         """
@@ -993,6 +1017,50 @@ class ScorpioNearIR(Scorpio, NearIR):
                 cr_var_sect[ncr_mask, i] = variances[:, 2 + i].copy()
 
         return (intercept_sect, int_var_sect, slope_sect, slope_var_sect, cr_sect, cr_var_sect)
+
+    def _dq_compress_sect(self, gdq_sect, pixel_dq):
+        """
+        Compress a 3D data quality cube into a 2D data quality array.
+
+        Parameters
+        ----------
+        gdq_sect : 3-D ndarray
+            The 3D data quality cube for a data section.
+
+        Returns
+        -------
+        pixel_dq : 2-D ndarray
+            The 2D data quality plane for a cube compressed to a 2D array.
+        """
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.bad_pixel)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.bad_pixel)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.non_linear)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.non_linear)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.saturated)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.saturated)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.cosmic_ray)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.cosmic_ray)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.no_data)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.no_data)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.overlap)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.overlap)
+
+        loc_ramp = np.bitwise_and(gdq_sect, DQ.unilluminated)
+        loc_image = np.where(loc_ramp.sum(axis=0) > 0)
+        pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.unilluminated)
+
+        return pixel_dq
 
     def _evaluate_fit(self, intercept_sect, slope_sect, cr_sect,
                       frame_time, group_time, gdq_sect, jump_flag):
