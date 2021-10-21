@@ -1038,6 +1038,7 @@ class ScorpioNearIR(Scorpio, NearIR):
         pixel_dq : 2-D ndarray
             The 2D data quality plane for a cube compressed to a 2D array.
         """
+        """
         loc_ramp = np.bitwise_and(gdq_sect, DQ.bad_pixel)
         loc_image = np.where(loc_ramp.sum(axis=0) > 0)
         pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.bad_pixel)
@@ -1065,6 +1066,9 @@ class ScorpioNearIR(Scorpio, NearIR):
         loc_ramp = np.bitwise_and(gdq_sect, DQ.unilluminated)
         loc_image = np.where(loc_ramp.sum(axis=0) > 0)
         pixel_dq[loc_image] = np.bitwise_or(pixel_dq[loc_image], DQ.unilluminated)
+        """
+
+        pixel_dq = np.bitwise_or(np.bitwise_or.reduce(gdq_sect, axis=0), pixel_dq)
 
         return pixel_dq
 
