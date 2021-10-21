@@ -21,8 +21,11 @@ def reduce(p):
     p.ADUToElectrons()
     p.addVAR(read_noise=True, poisson_noise=True)
     p.nonlinearityCorrect()
-    p.darkCorrect()
-    p.flatCorrect()
+    p.referencePixelsCorrect()
+    p.flagCosmicRaysFromNDRs()
+    p.calculateSignalByRegression()
+    #p.darkCorrect()        # temporarily skip until we can generate new files from PhoSim
+    #p.flatCorrect()        # temporarily skip until we can generate new files from PhoSim
 
     # Initial sky subtraction (pre-masking)
     p.separateSky()
