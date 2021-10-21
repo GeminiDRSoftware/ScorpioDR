@@ -199,10 +199,10 @@ class ScorpioNearIR(Scorpio, NearIR):
                         if iter >= min_iter and max_slope_diff < slope_diff_cutoff:
                             done = True
 
-                        current_fit = evaluate_fit(intercept_sect, slope_sect, cr_sect,
+                        current_fit = self._evaluate_fit(intercept_sect, slope_sect, cr_sect,
                                                    frame_time, group_time, gdq_sect, DQ.cosmic_ray)
 
-                        prev_fit = positive_fit(current_fit)    # use for next iteration
+                        prev_fit = self._positive_fit(current_fit)    # use for next iteration
                         del current_fit
 
                         prev_slope_sect = slope_sect.copy()
@@ -495,8 +495,8 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Convert any saturated or bad pixels to NaNs so they are not
                 # used in any calculations.
-                data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] == np.nan
-                data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] == np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
+                data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
 
                 # Extract the horizontal reference pixel sections.
                 rpix_top_sec = refpix_sec['top'][e]
