@@ -24,8 +24,8 @@ def reduce(p):
     p.referencePixelsCorrect()
     p.flagCosmicRaysFromNDRs()
     p.calculateSignalByRegression()
-    #p.darkCorrect()        # temporarily skip until we can generate new files from PhoSim
-    #p.flatCorrect()        # temporarily skip until we can generate new files from PhoSim
+    p.darkCorrect()
+    p.flatCorrect()
 
     # Initial sky subtraction (pre-masking)
     p.separateSky()
