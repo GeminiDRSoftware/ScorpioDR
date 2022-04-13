@@ -1,3 +1,4 @@
+#
 #                                                                       DRAGONS
 #
 #                                                  primitives_scorpio_bundle.py
@@ -15,7 +16,7 @@ import copy
 @parameter_override
 class ScorpioBundle(Scorpio):
     """
-    This is the class contains primitives that apply to Scorpio data that
+    This class contains primitives that apply to Scorpio data that
     still contain all the channels.
     """
     tagset = set(["GEMINI", "SCORPIO", "BUNDLE"])
@@ -35,10 +36,6 @@ class ScorpioBundle(Scorpio):
         # can check.
         return len(ad) in [1, 4, 8]
 
-    # The channel splitting primitive should go here
-    # def separateChannels()
-
-    # Added by Landon Gelman, Jun 29, 2020
     def separateChannels(self, adinputs=None, **params):
         """
         Break a Scorpio observation bundle into individual exposures.
