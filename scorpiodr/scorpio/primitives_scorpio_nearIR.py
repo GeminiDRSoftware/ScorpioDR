@@ -168,7 +168,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0]
                 frame_time = ext.hdr['INTTIME']
                 group_time = frame_time * (ext.hdr['UTRFRAME'] + ext.hdr['UTRSKIP'])
-                nframes = 1
+                nframes = ext.hdr['UTRFRAME']
                 max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
 
                 # These will be updated in the loop.
@@ -262,7 +262,6 @@ class ScorpioNearIR(Scorpio, NearIR):
             https://iopscience.iop.org/article/10.1086/662593
 
         TODO:
-        - add nframes input
         - add rej_threshold input
     
         License
@@ -305,9 +304,6 @@ class ScorpioNearIR(Scorpio, NearIR):
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
         sfx = params["suffix"]
 
-        # Currently we do not have a keyword for nframes, the number of samples averaged into a single group. For now, we'll set this value explicitly.
-        nframes = 1
-
         # TODO - add input to the primitive to set this value
         # This value yields ~0.04% pixels whose largest non-saturated ratio is above the threshold, using test data from PhoSim
         rej_threshold = 50
@@ -316,6 +312,9 @@ class ScorpioNearIR(Scorpio, NearIR):
             for e, ext in enumerate(ad):
                 # Make a copy of the data so we don't make changes to it
                 data = ext.data.copy()
+
+                # Get the number of frames averaged per group
+                nframes = ext.hdr["UTRFRAME"]
 
                 # Get data characteristics
                 ngroups, nrows, ncols = data.shape
