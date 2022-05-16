@@ -15,22 +15,3 @@ filter_wavelengths = {
     'Ks'  : 2.175,
 }
 
-# 20200615 - For testing, put near-average values in
-array_properties = {
-    "gainG"  :   1.7,    # electrons/ADU
-    "gainR"  :   1.7,
-    "gainI"  :   1.7,
-    "gainZ"  :   1.7,
-    "gainY"  :   1.7,
-    "gainJ"  :   1.7,
-    "gainH"  :   1.7,
-    "gainK"  :   1.7,
-    "read_noiseG"    :   2.63,      # electrons
-    "read_noiseR"    :   2.95,
-    "read_noiseI"    :   2.50,
-    "read_noiseZ"    :   2.62,
-    "read_noiseY"    :   5.0,
-    "read_noiseJ"    :   5.3,
-    "read_noiseH"    :   4.6,
-    "read_noiseK"    :   4.4,
-}
