@@ -109,21 +109,22 @@ class AstroDataScorpio(AstroDataGemini):
             Names of the amplifiers of the arrays.
         """
 
-        channel = self.channel().upper()
-        namps = lookup.amplifier_count.get(channel)
+        values = []
         keyword = self._keyword_for('array_name')
-
-        name_list = []
-        for amp in range(1,namps+1):
-            name = self.hdr.get(keyword+'{}'.format(amp))
+        for amp in range(1,100):
+            value = self.hdr.get(f'{keyword}{amp}')
             if self.is_single:
-                name_list.append(name)
+                if value is None:
+                    break
+                values.append(value)
             else:
-                name_list.append(name[0])
+                if value[0] is None:
+                    break
+                values.append(value[0])
         if self.is_single:
-            return name_list
+            return values
         else:
-            return [name_list]
+            return [values]
 
     @astro_data_descriptor
     def array_section(self, pretty=False):
