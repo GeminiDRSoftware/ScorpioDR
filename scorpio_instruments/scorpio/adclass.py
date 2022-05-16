@@ -68,17 +68,14 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_tag
     def _tag_is_ccd(self):
-        #if ('BUNDLE' not in self.tags) and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
         if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
             return TagSet(['CCD'], blocks=['NIR'])
 
     @astro_data_tag
     def _tag_is_nir(self):
-        #if ('BUNDLE' not in self.tags) and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
         if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
             return TagSet(['NIR'], blocks=['CCD'])
 
-    # TODO: Check the work I did in ScorpioDR_old for GCAL tags
     @astro_data_tag
     def _flat_type(self):
         bun = self.phu.get('BUNDLE')
@@ -96,26 +93,6 @@ class AstroDataScorpio(AstroDataGemini):
     #    CCD, NIR
     # Also probably needed:
     #    NODANDSHUFFLE, HIFREQ (High time resolution)
-
-    # ----------------------
-    # Descriptor definitions
-    # ----------------------
-
-    @astro_data_descriptor
-    def detector_name(self):
-        """
-        Returns the name of the detector
-
-        Returns
-        -------
-        str
-            the detector name
-        """
-        return self.phu.get(self._keyword_for('detector_name'))
-
-
-    # For a list of the expected descriptors see the appendix in the
-    # Astrodata User Manual.
 
     @astro_data_descriptor
     def array_name(self):
@@ -240,34 +217,16 @@ class AstroDataScorpio(AstroDataGemini):
         return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
-    def overscan_section(self, pretty=False):
+    def detector_name(self):
         """
-        Returns the overscan (or bias) sections.  If pretty is False, each
-        section is returned as a tuple of 0-based coordinates with format
-        (x1, x2, y1, y2). If pretty is True, a keyword value is returned
-        without parsing as a string. In this format, the coordinates are
-        generally 1-based. The descriptor for SCORPIO returns a dict keyed
-        by 'serial' and 'parallel' with each value being either a single
-        section in the format dictated by "pretty" (for a single extension)
-        or a list of such sections, one per extension.
-
-        Parameters
-        ----------
-        pretty : bool
-         If True, return the formatted string found in the header.
+        Returns the name of the detector
 
         Returns
         -------
-        dict
+        str
+            the detector name
         """
-        try:
-            overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
-        except KeyError:
-            # Something for IR arrays?
-            return None if self.is_single else [None] * len(self)
-        else:
-            overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
-            return overscan_dict
+        return self.phu.get(self._keyword_for('detector_name'))
 
     @astro_data_descriptor
     def gain(self):
@@ -299,6 +258,36 @@ class AstroDataScorpio(AstroDataGemini):
             return values
         else:
             return [values]
+
+    @astro_data_descriptor
+    def overscan_section(self, pretty=False):
+        """
+        Returns the overscan (or bias) sections.  If pretty is False, each
+        section is returned as a tuple of 0-based coordinates with format
+        (x1, x2, y1, y2). If pretty is True, a keyword value is returned
+        without parsing as a string. In this format, the coordinates are
+        generally 1-based. The descriptor for SCORPIO returns a dict keyed
+        by 'serial' and 'parallel' with each value being either a single
+        section in the format dictated by "pretty" (for a single extension)
+        or a list of such sections, one per extension.
+
+        Parameters
+        ----------
+        pretty : bool
+         If True, return the formatted string found in the header.
+
+        Returns
+        -------
+        dict
+        """
+        try:
+            overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
+        except KeyError:
+            # Something for IR arrays?
+            return None if self.is_single else [None] * len(self)
+        else:
+            overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+            return overscan_dict
 
     @astro_data_descriptor
     def read_noise(self):
@@ -365,38 +354,6 @@ class AstroDataScorpio(AstroDataGemini):
                (",".join(tuple_to_section(sec, pretty=True) for sec in ssec)
                 if pretty else ssec) for ssec in sidesec]
         return ({'top':top, 'bottom':bot, 'side':side})
-
-        
-    '''
-    @astro_data_descriptor
-    def gain(self):
-        """
-        Return the averaged gain for the color channel.
-
-        Returns
-        -------
-        float
-            gain
-        """
-        channel = self.channel().upper()
-        gain = lookup.array_properties.get('gain{}'.format(channel))
-        return [gain]
-    '''
-    '''
-    @astro_data_descriptor
-    def read_noise(self):
-        """
-        Return the averaged read noise for the color channel.
-        
-        Returns
-        -------
-        float
-            read noise
-        """
-        channel = self.channel().upper()
-        readnoise = lookup.array_properties.get('read_noise{}'.format(channel))
-        return [readnoise]
-    '''
 
     def _build_section_lists(self, keyword, pretty=False):
         # See if there is only one keyword without a number
