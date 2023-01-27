@@ -22,6 +22,7 @@ class AstroDataScorpio(AstroDataGemini):
                           channel='CHANNEL',
                           dark_section='DARKSEC',
                           data_section='DATSEC',
+                          detector_name='DETECTOR',
                           read_noise='RDNOIS',
                           ref_sec_top='REFSCT',
                           ref_sec_bot='REFSCB',
@@ -216,18 +217,6 @@ class AstroDataScorpio(AstroDataGemini):
                             y1=min(s.y1 for s in dsec), y2=max(s.y2 for s in dsec))
                     if isinstance(dsec, list) else dsec for dsec in datasec]
         return [tuple_to_section(sec, pretty=pretty) for sec in sections]
-
-    @astro_data_descriptor
-    def detector_name(self):
-        """
-        Returns the name of the detector
-
-        Returns
-        -------
-        str
-            the detector name
-        """
-        return self.phu.get(self._keyword_for('detector_name'))
 
     @astro_data_descriptor
     def gain(self):
