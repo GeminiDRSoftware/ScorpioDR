@@ -250,6 +250,11 @@ class AstroDataScorpio(AstroDataGemini):
             return [values]
 
     @astro_data_descriptor
+    def non_linear_level(self):
+        # temporary value for testing dragons compatibility before real data
+        return self.saturation_level()
+
+    @astro_data_descriptor
     def overscan_section(self, pretty=False):
         """
         Returns the overscan (or bias) sections.  If pretty is False, each
@@ -344,6 +349,11 @@ class AstroDataScorpio(AstroDataGemini):
                (",".join(tuple_to_section(sec, pretty=True) for sec in ssec)
                 if pretty else ssec) for ssec in sidesec]
         return ({'top':top, 'bottom':bot, 'side':side})
+
+    @astro_data_descriptor
+    def saturation_level(self):
+        # temporary value for testing dragons compatibility before real data
+        return 65535
 
     def _build_section_lists(self, keyword, pretty=False):
         # See if there is only one keyword without a number
