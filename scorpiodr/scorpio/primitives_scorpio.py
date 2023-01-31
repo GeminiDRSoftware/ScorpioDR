@@ -81,5 +81,5 @@ class Scorpio(Gemini):
 
             # Timestamp and update filename
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-            ad.update_filename(suffix, strip=True)
+            ad.update_filename(suffix=suffix, strip=True)
         return adinputs
