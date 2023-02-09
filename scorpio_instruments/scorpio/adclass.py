@@ -19,14 +19,10 @@ class AstroDataScorpio(AstroDataGemini):
 
     __keyword_dict = dict(array_name='ARRNAM',
                           array_section='ARRSEC',
-                          channel='CHANNEL',
                           dark_section='DARKSEC',
                           data_section='DATSEC',
                           detector_name='DETECTOR',
                           read_noise='RDNOIS',
-                          ref_sec_top='REFSCT',
-                          ref_sec_bot='REFSCB',
-                          ref_sec_side='REFSCS',
                           )
 
     @staticmethod
@@ -178,7 +174,7 @@ class AstroDataScorpio(AstroDataGemini):
         list of string/string
             Channel color band.
         """
-        return self.phu.get(self._keyword_for('channel'))
+        return self.phu.get('CHANNEL')
 
     @astro_data_descriptor
     def data_section(self, pretty=False):
@@ -317,9 +313,9 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def refpix_section(self, pretty=False):
-        topsec = self._build_section_lists(self._keyword_for('ref_sec_top'))
-        botsec = self._build_section_lists(self._keyword_for('ref_sec_bot'))
-        sidesec = self._build_section_lists(self._keyword_for('ref_sec_side'))
+        topsec = self._build_section_lists('REFSCT', pretty=pretty)
+        botsec = self._build_section_lists('REFSCB', pretty=pretty)
+        sidesec = self._build_section_lists('REFSCS', pretty=pretty)
 
         if self.is_single:
             top = (tuple_to_section(topsec, pretty=pretty) 
