@@ -36,12 +36,12 @@ class AstroDataScorpio(AstroDataGemini):
     def _tag_instrument(self):
         return TagSet(['SCORPIO'])
 
-    @astro_data_tag
-    def _is_bundle(self):
-        if self.phu.get('BUNDLE') == 'T':
-            return TagSet(['BUNDLE'])
-        else:
-            return TagSet(blocks=['BUNDLE'])
+    #@astro_data_tag
+    #def _is_bundle(self):
+    #    if self.phu.get('BUNDLE') == 'T':
+    #        return TagSet(['BUNDLE'])
+    #    else:
+    #        return TagSet(blocks=['BUNDLE'])
 
     @astro_data_tag
     def _tag_dark(self):
@@ -65,12 +65,14 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_tag
     def _tag_is_ccd(self):
-        if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
+        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
+        if self.phu.get('CHANNEL').upper() in ['G','R','I','Z']:
             return TagSet(['CCD'], blocks=['NIR'])
 
     @astro_data_tag
     def _tag_is_nir(self):
-        if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
+        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
+        if self.phu.get('CHANNEL').upper() in ['Y','J','H','K']:
             return TagSet(['NIR'], blocks=['CCD'])
 
     @astro_data_tag
@@ -78,9 +80,11 @@ class AstroDataScorpio(AstroDataGemini):
         bun = self.phu.get('BUNDLE')
         obj = self.phu.get('OBJECT', '').upper()
         shut = self.phu.get('GCALSHUT', '').upper()
-        if bun == 'F' and obj == 'GCALFLAT' and shut == 'OPEN':
+        #if bun == 'F' and obj == 'GCALFLAT' and shut == 'OPEN':
+        if obj == 'GCALFLAT' and shut == 'OPEN':
             return TagSet(['LAMPON', 'NIR'], blocks=['CCD'])
-        if bun == 'F' and obj == 'GCALFLAT' and shut == 'CLOSED':
+        #if bun == 'F' and obj == 'GCALFLAT' and shut == 'CLOSED':
+        if obj == 'GCALFLAT' and shut == 'CLOSED':
             return TagSet(['LAMPOFF', 'NIR'], blocks=['CCD'])
 
     # More tags needs to be added by the Scorpio DR team
