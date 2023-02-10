@@ -19,7 +19,7 @@ class AstroDataScorpio(AstroDataGemini):
 
     __keyword_dict = dict(array_name='ARRNAM',
                           array_section='ARRSEC',
-                          dark_section='DARKSEC',
+                          dark_section='UNILSEC',
                           data_section='DATSEC',
                           detector_name='DETECTOR',
                           read_noise='RDNOIS',
