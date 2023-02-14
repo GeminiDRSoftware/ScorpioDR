@@ -82,10 +82,10 @@ class AstroDataScorpio(AstroDataGemini):
         shut = self.phu.get('GCALSHUT', '').upper()
         #if bun == 'F' and obj == 'GCALFLAT' and shut == 'OPEN':
         if obj == 'GCALFLAT' and shut == 'OPEN':
-            return TagSet(['LAMPON', 'NIR'], blocks=['CCD'])
+            return TagSet(['LAMPON']) #, 'NIR'], blocks=['CCD'])
         #if bun == 'F' and obj == 'GCALFLAT' and shut == 'CLOSED':
         if obj == 'GCALFLAT' and shut == 'CLOSED':
-            return TagSet(['LAMPOFF', 'NIR'], blocks=['CCD'])
+            return TagSet(['LAMPOFF']) #, 'NIR'], blocks=['CCD'])
 
     # More tags needs to be added by the Scorpio DR team
     # At this time, Gemini DR expects the following tags to be implemented.
