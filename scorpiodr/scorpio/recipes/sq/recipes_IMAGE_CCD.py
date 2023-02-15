@@ -25,7 +25,7 @@ def reduce(p):
     p.addVAR(poisson_noise=True)
     p.darkCorrect()   # TBD if truly needed
     p.flatCorrect()
-    p.fringeCorrect()
+    #p.fringeCorrect()
     p.detectSources()
     p.adjustWCSToReference()
     p.resampleToCommonFrame()
