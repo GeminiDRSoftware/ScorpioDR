@@ -166,7 +166,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 gdq_sect = ext.mask
                 readnoise_sect = gt.array_from_descriptor_value(ext, 'read_noise')[0]
                 gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0]
-                frame_time = ext.hdr['INTTIME']
+                frame_time = 0.38 #ext.hdr['INTTIME']
                 group_time = frame_time * (ext.hdr['UTRFRAME'] + ext.hdr['UTRSKIP'])
                 nframes = ext.hdr['UTRFRAME']
                 max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
