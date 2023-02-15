@@ -10,7 +10,7 @@ class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
         self.attach_mdf = False
 
-class subtractOverscanConfig(parameters_ccd.subtractOverscanConfig):
+class overscanCorrectConfig(parameters_ccd.overscanCorrectConfig):
     def setDefaults(self):
         self.function = "spline3"
         self.order = 0
