@@ -735,9 +735,9 @@ class ScorpioNearIR(Scorpio, NearIR):
             # Get the keywords for all sections to be trimmed.
             datasec_kw = ad._keyword_for('data_section')
             darksec_kw = ad._keyword_for('dark_section')
-            refsect_kw = ad._keyword_for('ref_sec_top')
-            refsecb_kw = ad._keyword_for('ref_sec_bot')
-            refsecs_kw = ad._keyword_for('ref_sec_side')
+            #refsect_kw = ad._keyword_for('ref_sec_top')
+            #refsecb_kw = ad._keyword_for('ref_sec_bot')
+            #refsecs_kw = ad._keyword_for('ref_sec_side')
 
             all_datasecs = ad.data_section()
 
@@ -771,12 +771,12 @@ class ScorpioNearIR(Scorpio, NearIR):
                 for amp in range(1,100):
                     if f'{darksec_kw}{amp}' in ext.hdr:
                         del ext.hdr[f'{darksec_kw}{amp}']
-                    if f'{refsect_kw}{amp}' in ext.hdr:
-                        del ext.hdr[f'{refsect_kw}{amp}']
-                    if f'{refsecb_kw}{amp}' in ext.hdr:
-                        del ext.hdr[f'{refsecb_kw}{amp}']
-                    if f'{refsecs_kw}{amp}' in ext.hdr:
-                        del ext.hdr[f'{refsecs_kw}{amp}']
+                    if f'REFSCT{amp}' in ext.hdr:
+                        del ext.hdr[f'REFSCT{amp}']
+                    if f'REFSCB{amp}' in ext.hdr:
+                        del ext.hdr[f'REFSCB{amp}']
+                    if f'REFSCS{amp}' in ext.hdr:
+                        del ext.hdr[f'REFSCS{amp}']
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
