@@ -281,7 +281,10 @@ class AstroDataScorpio(AstroDataGemini):
             # Something for IR arrays?
             return None if self.is_single else [None] * len(self)
         else:
-            overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+            try:
+                overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+            except KeyError:
+                pass
             return overscan_dict
 
     @astro_data_descriptor
