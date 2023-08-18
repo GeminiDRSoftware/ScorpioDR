@@ -3,6 +3,7 @@
 #
 #                                               primitives_scorpio_image_ccd.py
 # ------------------------------------------------------------------------------
+from contextlib import suppress
 
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
@@ -10,6 +11,9 @@ from gempy.gemini import gemini_tools as gt
 from geminidr.core import CCD
 from .primitives_scorpio import Scorpio
 from . import parameters_scorpio_ccd
+
+import astrodata
+import numpy as np
 
 from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
@@ -28,37 +32,50 @@ class ScorpioCCD(Scorpio, CCD):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_ccd)
 
-    def trimOverscan(self, adinputs=None, suffix=None):
-        """
-        The trimOverscan primitive trims the overscan region from the input
-        AstroData object and updates the headers.
+    def subtractOverscan(self, adinputs=None, **params):
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        timestamp_key = self.timestamp_keys[self.myself()]
+        sfx = params["suffix"]
 
-        Parameters
-        ----------
-        suffix: str
-            suffix to be added to output files
-        """
+        for ad in adinputs:
+            for ext in ad:
+                os_subtracted_integrations = []
+                nints, ngroups, nrows, ncols = ext.data.shape
+                for i in range(nints):
+                    temp_ad = astrodata.create(ad.phu)
+                    temp_ad.append(ext.nddata[i, 0])
+                    os_subtracted = super().subtractOverscan(adinputs=[temp_ad], **params)
+                    del temp_ad
+                    os_subtracted_integrations.append(np.array([os_subtracted[0][0].data]))
+                ext.reset(np.array(os_subtracted_integrations))
+            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
+            ad.update_filename(suffix=sfx, strip=True)
+
+        return adinputs
+
+    def trimOverscan(self, adinputs=None, suffix=None):
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
         timestamp_key = self.timestamp_keys[self.myself()]
 
         for ad in adinputs:
-            if ad.phu.get(timestamp_key) is not None:
-                log.warning('No changes will be made to {}, since it has '
-                            'already been processed by trimOverscan'.
-                            format(ad.filename))
-                continue
+            for ext in ad:
+                trimmed_integrations = []
+                nints, ngroups, nrows, ncols = ext.data.shape
+                for i in range(nints):
+                    temp_ad = astrodata.create(ad.phu)
+                    temp_ad.append(ext.nddata[i, 0])
+                    os_trimmed = super().trimOverscan([temp_ad], suffix=suffix)
+                    del temp_ad
+                    trimmed_integrations.append(np.array([os_trimmed[0][0].data]))
+                ext.reset(np.array(trimmed_integrations))
 
-            ad = gt.trim_to_data_section(ad,
-                                    keyword_comments=self.keyword_comments)
-            # Tidy up additional header keywords that are too complicated
-            # for gt.trim_to_data_section() to handle
-            del ad.hdr['OVRSECS*']
-            del ad.hdr['OVRSECP*']
-            kw = ad._keyword_for('data_section')
-            del ad.hdr[f'{kw}?*']
+                # Delete all overcan section keywords from extension header
+                with suppress(AttributeError, KeyError):
+                    del ext.hdr['OVRSECS*']
+                    del ext.hdr['OVRSECP*']
 
-            # Set keyword, timestamp, and update filename
             ad.phu.set('TRIMMED', 'yes', self.keyword_comments['TRIMMED'])
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=suffix, strip=True)
