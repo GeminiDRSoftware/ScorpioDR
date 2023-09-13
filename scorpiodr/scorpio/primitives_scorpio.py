@@ -71,6 +71,35 @@ class Scorpio(Gemini):
             ad.update_filename(suffix=suffix, strip=True)
         return adinputs
 
+    def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_cal=None):
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        timestamp_key = self.timestamp_keys[self.myself()]
+
+        if flat is None:
+            flat_list = self.caldb.get_processed_flat(adinputs)
+        else:
+            flat_list = (flat, None)
+
+        for ad, flat, origin in zip(*gt.make_lists(adinputs, *flat_list, force_ad=(1,))):
+            for ext in ad:
+                nints = ext.data.shape[0]
+                data_list, mask_list, variance_list = [], [], []
+                for i in range(nints):
+                    temp_ad = astrodata.create(ad.phu)
+                    temp_ad.append(ext.nddata[i], header=ext.hdr)
+                    flat_corrected = super().flatCorrect(adinputs=[temp_ad], suffix=suffix, flat=flat, do_cal=do_cal)
+                    data_list.append(flat_corrected[0][0].data)
+                    mask_list.append(flat_corrected[0][0].mask)
+                    variance_list.append(flat_corrected[0][0].variance)
+                ext.reset(np.array(data_list), 
+                                   mask=np.array(mask_list), 
+                                   variance=np.array(variance_list))
+            ad.phu.set("FLATIM", flat.filename, self.keyword_comments["FLATIM"])
+            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
+            ad.update_filename(suffix=suffix, strip=True)
+        return adinputs
+
     def standardizeInstrumentHeaders(self, adinputs=None, suffix=None):
         """
         This primitive is used to make the changes and additions to the keywords in the headers of SCORPIO data, specifically.
