@@ -83,3 +83,41 @@ class Scorpio(Gemini):
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=suffix, strip=True)
         return adinputs
+
+    def standardizeStructure(self, adinputs=None, **params):
+        """
+        This primitive is used to standardize the structure of SCORPIO data,
+        specifically.
+
+        Parameters
+        ----------
+        suffix: str
+            suffix to be added to output files
+        attach_mdf: bool
+            attach an MDF to the AD objects?
+        mdf: str
+            full path of the MDF to attach
+        """
+        adinputs = super().standardizeStructure(adinputs, **params)
+
+        adoutputs = []
+        for ad in adinputs:
+            if "CCD" in ad.tags:     # VIS
+                new_ad = astrodata.create(ad.phu)
+                for ext in ad:
+                    nints = ext.data.shape[0]
+                    if "CAL" in ad.tags:
+                        # Remove the group axis and integrations axis
+                        # For CALs, there's only 1 integration per exposure and we need a stackable 2-D image
+                        new_ad.append(ext.data[0, 0], header=ext.hdr)
+                    else:
+                        # Skip the dark frames preceding light frames in science frames in continuous window imaging.
+                        if "IMAGE" in ad.tags and ad.phu["WMODE"].upper() == "CONTINUOUS":
+                            new_ad.append([ext.data[nint, 0] for nint in range(ext.hdr["WNFDARK"], nints)], header=ext.hdr)
+                        else:   # full frame imaging, burst window imaging, or spectroscopy
+                            new_ad.append([ext.data[nint, 0] for nint in range(nints)], header=ext.hdr)
+                new_ad.filename = ad.filename
+                adoutputs.append(new_ad)
+            else:   # NIR
+                adoutputs.append(ad)
+        return adoutputs
