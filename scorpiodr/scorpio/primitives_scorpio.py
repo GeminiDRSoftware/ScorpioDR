@@ -4,6 +4,8 @@
 #                                                         primitives_scorpio.py
 # ------------------------------------------------------------------------------
 
+import astrodata
+import numpy as np
 from geminidr.gemini.primitives_gemini import Gemini
 from gempy.gemini import gemini_tools as gt
 
@@ -39,6 +41,35 @@ class Scorpio(Gemini):
         # this needs to be verified. This would be for the debundled data
         # and inherited and used by the ScorpioImage and ScorpioSpect class.
         return len(ad) in [1]
+
+    def darkCorrect(self, adinputs=None, suffix=None, dark=None, do_cal=None):
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        timestamp_key = self.timestamp_keys[self.myself()]
+
+        if dark is None:
+            dark_list = self.caldb.get_processed_dark(adinputs)
+        else:
+            dark_list = (dark, None)
+
+        for ad, dark, origin in zip(*gt.make_lists(adinputs, *dark_list, force_ad=(1,))):
+            for ext in ad:
+                nints = ext.data.shape[0]
+                data_list, mask_list, variance_list = [], [], []
+                for i in range(nints):
+                    temp_ad = astrodata.create(ad.phu)
+                    temp_ad.append(ext.nddata[i], header=ext.hdr)
+                    dark_corrected = super().darkCorrect(adinputs=[temp_ad], suffix=suffix, dark=dark, do_cal=do_cal)
+                    data_list.append(dark_corrected[0][0].data)
+                    mask_list.append(dark_corrected[0][0].mask)
+                    variance_list.append(dark_corrected[0][0].variance)
+                ext.reset(np.array(data_list), 
+                                   mask=np.array(mask_list), 
+                                   variance=np.array(variance_list))
+            ad.phu.set('DARKIM', dark.filename, self.keyword_comments['DARKIM'])
+            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
+            ad.update_filename(suffix=suffix, strip=True)
+        return adinputs
 
     def standardizeInstrumentHeaders(self, adinputs=None, suffix=None):
         """
