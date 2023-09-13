@@ -121,3 +121,6 @@ class Scorpio(Gemini):
             else:   # NIR
                 adoutputs.append(ad)
         return adoutputs
+
+    def standardizeWCS(self, adinputs=None, **params):
+        return adinputs
