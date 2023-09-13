@@ -39,19 +39,24 @@ class ScorpioCCD(Scorpio, CCD):
         sfx = params["suffix"]
 
         for ad in adinputs:
-            for ext in ad:
-                os_subtracted_integrations = []
-                nints, ngroups, nrows, ncols = ext.data.shape
-                for i in range(nints):
-                    temp_ad = astrodata.create(ad.phu)
-                    temp_ad.append(ext.nddata[i, 0])
-                    os_subtracted = super().subtractOverscan(adinputs=[temp_ad], **params)
-                    del temp_ad
-                    os_subtracted_integrations.append(np.array([os_subtracted[0][0].data]))
-                ext.reset(np.array(os_subtracted_integrations))
-            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-            ad.update_filename(suffix=sfx, strip=True)
-
+            if "CAL" in ad.tags:
+                ad = super().subtractOverscan([ad], **params)[0]
+            else:
+                for ext in ad:
+                    nints = ext.data.shape[0]
+                    data_list = []
+                    mask_list = []
+                    variance_list = []
+                    for i in range(nints):
+                        temp_ad = astrodata.create(ad.phu)
+                        temp_ad.append(ext.nddata[i], header=ext.hdr)
+                        os_subtracted = super().subtractOverscan(adinputs=[temp_ad], **params)
+                        data_list.append(os_subtracted[0][0].data)
+                        mask_list.append(os_subtracted[0][0].mask)
+                        variance_list.append(os_subtracted[0][0].variance)
+                    ext.reset(np.array(data_list), mask=np.array(mask_list), variance=np.array(variance_list))
+                gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
+                ad.update_filename(suffix=sfx, strip=True)
         return adinputs
 
     def trimOverscan(self, adinputs=None, suffix=None):
@@ -60,25 +65,35 @@ class ScorpioCCD(Scorpio, CCD):
         timestamp_key = self.timestamp_keys[self.myself()]
 
         for ad in adinputs:
-            for ext in ad:
-                trimmed_integrations = []
-                nints, ngroups, nrows, ncols = ext.data.shape
-                for i in range(nints):
-                    temp_ad = astrodata.create(ad.phu)
-                    temp_ad.append(ext.nddata[i, 0])
-                    os_trimmed = super().trimOverscan([temp_ad], suffix=suffix)
-                    del temp_ad
-                    trimmed_integrations.append(np.array([os_trimmed[0][0].data]))
-                ext.reset(np.array(trimmed_integrations))
+            if "CAL" in ad.tags:
+                ad = super().trimOverscan([ad], suffix=suffix)[0]
+                for ext in ad:
+                    with suppress(AttributeError, KeyError):
+                        del ext.hdr['OVRSECS*']
+                        del ext.hdr['OVRSECP*']
+            else:
+                for ext in ad:
+                    nints = ext.data.shape[0]
+                    data_list = []
+                    mask_list = []
+                    variance_list = []
+                    for i in range(nints):
+                        temp_ad = astrodata.create(ad.phu)
+                        temp_ad.append(ext.nddata[i], header=ext.hdr)
+                        os_trimmed = super().trimOverscan(adinputs=[temp_ad], suffix=suffix)
+                        data_list.append(os_trimmed[0][0].data)
+                        mask_list.append(os_trimmed[0][0].mask)
+                        variance_list.append(os_trimmed[0][0].variance)
+                    ext.reset(np.array(data_list), mask=np.array(mask_list), variance=np.array(variance_list))
 
-                # Delete all overcan section keywords from extension header
-                with suppress(AttributeError, KeyError):
-                    del ext.hdr['OVRSECS*']
-                    del ext.hdr['OVRSECP*']
+                    with suppress(AttributeError, KeyError):
+                        del ext.hdr['OVRSECS*']
+                        del ext.hdr['OVRSECP*']
 
-            ad.phu.set('TRIMMED', 'yes', self.keyword_comments['TRIMMED'])
-            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-            ad.update_filename(suffix=suffix, strip=True)
+                ad.phu.set('TRIMMED', 'yes', self.keyword_comments['TRIMMED'])
+                gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
+                ad.update_filename(suffix=suffix, strip=True)
+
         return adinputs
 
     def myNewPrimitive(self, adinputs=None, **params):
