@@ -705,7 +705,11 @@ class ScorpioNearIR(Scorpio, NearIR):
                     corrector_array = np.concatenate([top_ref, sci, bot_ref], axis=0)
                     corrector_array = np.concatenate([left_ref, corrector_array, right_ref], axis=1)
 
-                    assert ext.data[frm].shape == corrector_array.shape
+                    try:
+                        assert ext.data[frm].shape == corrector_array.shape
+                    except AssertionError:
+                        log.error("Data shape does not match corrector shape")
+                        raise ValueError("Data shape does not match corrector shape")
 
                     # Subtract the corrector frame from the data in the
                     # extension.
