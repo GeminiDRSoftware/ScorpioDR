@@ -503,13 +503,13 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Get the horizontal reference pixel sections from the data 
                 # plane. rpix_top and rpix_bot are lists of 3D arrays 
-                # with shape (nframes, nrows, ncols), where each array
+                # with shape (ngroups, nrows, ncols), where each array
                 # corresponds to an amplifier.
                 rpix_top = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]
                 rpix_bot = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
 
                 # These just make loop indices easier later.
-                nframes, nrows, ncols = data.shape
+                ngroups, nrows, ncols = data.shape
                 namps = len(rpix_top)
 
                 # Exctract the vertical reference pixel sections.
@@ -517,13 +517,13 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                 # Get the vertical reference pixel data sections from the 
                 # data plane. rpix_side is a list of 3D arrays with shape
-                # (nframes, nrows, ncols). Note, these arrays do not yet
+                # (ngroups, nrows, ncols). Note, these arrays do not yet
                 # correspond to amplifiers.
                 rpix_side = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
 
                 # Restructure the vertical reference pixel sections into 2 
                 # sections (left and right). rpix_side_fixed is a list of 
-                # 3D arrays with shape (nframes, nrows, ncols). These arrays
+                # 3D arrays with shape (ngroups, nrows, ncols). These arrays
                 # correspond to amplifiers.
                 # This only satisfies full FOV imaging mode.
                 rpix_left, rpix_right = [], []
@@ -566,7 +566,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 # amplifier average. Subtract the superaverage from the 
                 # amplifier average to compute the delta. Subtract the delta 
                 # from all pixels in this amplifier in this frame.
-                for frm in range(nframes):
+                for frm in range(ngroups):
                     amp_deltas = []
                     for amp in range(namps):
                         ampavg = np.mean([rpix_top[amp][frm], rpix_bot[amp][frm]])
@@ -614,7 +614,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                     ramp_avg_side.append(ra_side)
 
                 # Loop over the frames in the ramp.
-                for frm in range(nframes):
+                for frm in range(ngroups):
                     # Create a list for the coefficients for this frame.
                     coeffs = []
 
