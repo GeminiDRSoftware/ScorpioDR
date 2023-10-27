@@ -15,14 +15,15 @@ class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
         self.attach_mdf = False
 
-class referencePixelsCorrectConfig(config.Config):
-    suffix = config.Field("Filename suffix", str, "_refpixelsCorrected", optional=True)
-
 class subtractReferencePixelsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_refpixelsSubtracted", optional=True)
+    do_vertical_correction = config.Field("Perform vertical reference pixel corrections?", bool, True)
 
 class trimReferencePixelsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_refpixelsTrimmed", optional=True)
+
+class referencePixelsCorrectConfig(subtractReferencePixelsConfig, trimReferencePixelsConfig):
+    suffix = config.Field("Filename suffix", str, "_refpixelsCorrected", optional=True)
 
 class myNewPrimitive(config.Config):
     suffix = config.Field("Filename suffix", str, "_suffix")
