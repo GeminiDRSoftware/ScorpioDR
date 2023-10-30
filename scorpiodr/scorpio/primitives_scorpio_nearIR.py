@@ -715,24 +715,11 @@ class ScorpioNearIR(Scorpio, NearIR):
             # Get the keywords for all sections to be trimmed.
             datasec_kw = ad._keyword_for('data_section')
             darksec_kw = ad._keyword_for('dark_section')
-            #refsect_kw = ad._keyword_for('ref_sec_top')
-            #refsecb_kw = ad._keyword_for('ref_sec_bot')
-            #refsecs_kw = ad._keyword_for('ref_sec_side')
 
             all_datasecs = ad.data_section()
 
             for ext, datasec in zip(ad, all_datasecs):
-                # Trim SCI, VAR, DQ arrays
-                #ext.reset(ext.nddata[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
-
-                # And OBJMASK (if it exists)
-                #if hasattr(ext, 'OBJMASK'):
-                #    ext.OBJMASK = ext.OBJMASK[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-
-                # Temporarily use this to trim the arrays
-                ext.data = ext.data[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-                ext.variance = ext.variance[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-                ext.mask = ext.mask[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+                ext.reset(ext.nddata[:, :, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
 
                 # Update the data section keywords in the header
                 sections, new_sections = gt.map_data_sections_to_trimmed_data(datasec)
@@ -748,15 +735,10 @@ class ScorpioNearIR(Scorpio, NearIR):
                     ext.hdr[f'{datasec_kw}{amp}'] = newDataSecStr
 
                 # Remove the reference pixel and dark section keywords from the headers
-                for amp in range(1,100):
-                    if f'{darksec_kw}{amp}' in ext.hdr:
-                        del ext.hdr[f'{darksec_kw}{amp}']
-                    if f'REFSCT{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCT{amp}']
-                    if f'REFSCB{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCB{amp}']
-                    if f'REFSCS{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCS{amp}']
+                del ext.hdr[f'{darksec_kw}*']
+                del ext.hdr[f'REFSCT*']
+                del ext.hdr[f'REFSCB*']
+                del ext.hdr[f'REFSCS*']
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
