@@ -490,7 +490,7 @@ class ScorpioNearIR(Scorpio, NearIR):
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
         sfx = params["suffix"]
-        do_vertical_correction = True#params["do_vertical_correction"]
+        do_vertical_correction = params["do_vertical_correction"]
 
         # Construct a 2D "time" array that matches the size and shape of one amplifier. 
         # Multiply it by 10E-6 (seconds) to approximate the pixel readout rate.
@@ -539,7 +539,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 rpix_bot_sec = refpix_sec["bottom"][e]     # bottom horizontal ref pixels
 
                 # if full frame imaging or spectroscopy and vertical ref pix corrections on
-                if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_corrections:
+                if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
                     rpix_side_sec = refpix_sec["side"][e]    # vertical ref pixels
 
                 for intn in range(len(ext.data)):
@@ -560,7 +560,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                         rpb_no_ga.append(rpb[amp]-meanb)
 
                     # if full frame imaging or spectroscopy and vertical ref pix corrections on
-                    if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_corrections:
+                    if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
                         rps_raw = [data[intn, :, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
 
                         # Restructure the vertical reference pixel sections to correspond to amplifiers.
@@ -588,7 +588,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                             coeffs.append(np.polyfit(time_horizontal, rpix_horizontal, deg=1))
 
                         # if full frame imaging or spectroscopy and vertical ref pix corrections on
-                        if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_corrections:
+                        if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
                             # Calculate the row averges for the top, side, and bottom reference pixels
                             # in the first array.
                             row_avg_top_left = np.mean(rpt_no_ga[0][grp], axis=1, keepdims=True)
@@ -616,7 +616,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                         corrector_by_amp = []
                         for amp in range(namps):
                             # if full frame iamging or spectroscopy and vertical ref pix corrections on
-                            if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_corrections:
+                            if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
                                 corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg) + smoothed_data
                             else:
                                 corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg)
