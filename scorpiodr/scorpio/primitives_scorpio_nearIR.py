@@ -16,6 +16,7 @@ from recipe_system.utils.decorators import parameter_override
 import numpy as np
 import numpy.linalg as la
 import sys
+from copy import deepcopy
 # ------------------------------------------------------------------------------
 
 @parameter_override
@@ -463,6 +464,12 @@ class ScorpioNearIR(Scorpio, NearIR):
         """
         Correct a SCORPIO NIR image's noise by using its reference pixels. 
 
+        This algorithm takes some extra steps that wouldn't be necessary if the user
+        is expecting to trim the reference pixels (and the unilluminated amplifiers in
+        full frame imaging) immediately after this primitive is run. But in the event
+        that a user wants or needs to inspect the image outputted from this primitive,
+        the extra steps ensure that all pixels are corrected.
+
         The methodology used in this primitive is based on Robberto 2014,
         "On the Reference Pixel Correction of NIRCam Detectors" and his IDL
         code, corrector.pro.
@@ -483,239 +490,208 @@ class ScorpioNearIR(Scorpio, NearIR):
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
         sfx = params["suffix"]
+        do_vertical_correction = params["do_vertical_correction"]
+
+        # Construct a 2D "time" array that matches the size and shape of one amplifier. 
+        # Multiply it by 10E-6 (seconds) to approximate the pixel readout rate.
+        # Slice out the corresponding horizontal and vertical reference pixels.
+        # Calculate the row averages for the corresponding reference pixels.
+        # Assemble the single column of time pixels as they would appear in the image, i.e. keepdims.
+        # So we have an array of 2048 rows by 1 column.
+        # Finally, get a 1D array of all pixels corresponding to the horizontal reference pixels for linear regression later on.
+        amp_rows = 2048
+        amp_cols = 64
+        amp_size = amp_rows * amp_cols
+        time = np.flip(np.linspace(1., amp_size, amp_size, endpoint=True).reshape((amp_rows, amp_cols)) * 10E-6, 0)
+        time_top = time[:4, :]
+        time_bot = time[-4:, :]
+        time_side = time[4:-4, :4]
+        time_top_row_avg = np.mean(time_top, axis=1, keepdims=True)
+        time_bot_row_avg = np.mean(time_bot, axis=1, keepdims=True)
+        time_side_row_avg = np.mean(time_side, axis=1, keepdims=True)
+        time_row_avg = np.vstack([time_top_row_avg, time_side_row_avg, time_bot_row_avg])
+        time_horizontal = np.vstack([time_top, time_bot]).flatten()    # used later for linear regression
 
         for ad in adinputs:
-            # Get the list of section values for all reference pixel sections. 
+            obsmode = ad.phu["OBSMODE"].upper()    # imaging vs spectroscopy
+            if obsmode == "IMAGE":
+                imtype = ad.phu["IMTYPE"].upper()    # full frame vs window
+
+            # Get the list of Section tuples for all reference pixels sections.
             refpix_sec = ad.refpix_section()
 
             for e, ext in enumerate(ad):
-                # Make a copy of the data so we don't make changes to it
-                data = ext.data.copy()
+                # Make an empty_like array which will be used to replace the original extension data
+                new_ext_data = np.empty_like(ext.data, dtype=np.float32)
 
-                # Convert any saturated or bad pixels to NaNs so they are not
-                # used in any calculations.
+                # Make a copy of the data so we don't modify the original yet.
+                if ext.is_in_adu():
+                    data = deepcopy(ext.data.astype(np.float32))    # 4D numpy array
+                else:
+                    data = deepcopy(ext.data)
+
+                # Convert any saturated or bad pixels to NaNs so they are not used in any calculations.
                 data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
                 data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
 
-                # Extract the horizontal reference pixel sections.
-                rpix_top_sec = refpix_sec['top'][e]
-                rpix_bot_sec = refpix_sec['bottom'][e]
+                # Get the indices of the reference pixel sections for this extension from the master list above.
+                rpix_top_sec = refpix_sec["top"][e]     # top horiztonal ref pixels    # list of Section tuples
+                rpix_bot_sec = refpix_sec["bottom"][e]     # bottom horizontal ref pixels
 
-                # Get the horizontal reference pixel sections from the data 
-                # plane. rpix_top and rpix_bot are lists of 3D arrays 
-                # with shape (nframes, nrows, ncols), where each array
-                # corresponds to an amplifier.
-                rpix_top = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]
-                rpix_bot = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
+                # if full frame imaging or spectroscopy and vertical ref pix corrections on
+                if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
+                    rpix_side_sec = refpix_sec["side"][e]    # vertical ref pixels
 
-                # These just make loop indices easier later.
-                nframes, nrows, ncols = data.shape
-                namps = len(rpix_top)
+                for intn in range(len(ext.data)):
+                    # Extract the reference pixel section from the data. These are lists of 3D arrays with the shape (ngroups, nrows, ncols).
+                    # The arrays in rpt and rpb correspond to amplifiers. The arrays in rps do not yet correspond to amplifiers.
+                    # Calculate and subtract the average for each pixel along the group axis.
+                    rpt = [data[intn, :, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]    # list of 3D numpy arrays
+                    rpb = [data[intn, :, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
 
-                # Exctract the vertical reference pixel sections.
-                rpix_side_sec = refpix_sec['side'][e]
+                    ngroups = len(data[intn])
+                    namps = len(rpt)
 
-                # Get the vertical reference pixel data sections from the 
-                # data plane. rpix_side is a list of 3D arrays with shape
-                # (nframes, nrows, ncols). Note, these arrays do not yet
-                # correspond to amplifiers.
-                rpix_side = [data[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
-
-                # Restructure the vertical reference pixel sections into 2 
-                # sections (left and right). rpix_side_fixed is a list of 
-                # 3D arrays with shape (nframes, nrows, ncols). These arrays
-                # correspond to amplifiers.
-                # This only satisfies full FOV imaging mode.
-                rpix_left, rpix_right = [], []
-                for sec in range(len(rpix_side)):
-                    if sec % 2 == 0:
-                        rpix_right.append(rpix_side[sec])
-                    else:
-                        rpix_left.append(rpix_side[sec])
-                rpix_left = np.hstack(rpix_left)
-                rpix_right = np.hstack(rpix_right)
-                rpix_side_fixed = [rpix_left, rpix_right]
-
-                # Determine the size and shape of one amplifier.
-                amp_rows = rpix_side_fixed[0].shape[1] + 8    # +8 for top and bottom refpixels (there will always be 4 on top and 4 on bottom)
-                amp_cols = rpix_top_sec[0].x2 - rpix_top_sec[0].x1
-                amp_shape = (amp_rows, amp_cols)
-                amp_size = amp_rows * amp_cols
-
-                # Create a 2D time array that matches the size and shape of one 
-                # amplifier. Multiplly it by 10E-6 (seconds) for pixel readout 
-                # rate.
-                #amp_shape = (2048, 64) # nrows x ncols
-                #amp_size = amp_shape[0] * amp_shape[1]
-                time = np.linspace(1, amp_size, amp_size, endpoint=True).reshape((amp_shape[0], -1)) * 10E-6
-                time = np.flip(time, 0)
-
-                # Get the list of data section values. We need the indices of 
-                # each amplifier in the data section rather than one whole data 
-                # section.
-                datasec = gt.map_array_sections(ext)
-
-                # Determine the SUPERAVERAGE of the reference pixels. The 
-                # superaverage is the average from the top and bottom 
-                # reference pixel sections, across all amplifiers, and across 
-                # all frames.
-                superaverage = np.mean([rpix_top, rpix_bot])
-
-                # Loop over the frames and amplifiers and calculate the average 
-                # from the top and bottom reference pixels. This is the 
-                # amplifier average. Subtract the superaverage from the 
-                # amplifier average to compute the delta. Subtract the delta 
-                # from all pixels in this amplifier in this frame.
-                for frm in range(nframes):
-                    amp_deltas = []
+                    rpt_no_ga, rpb_no_ga = [], []    # group averaged horizontal reference pixels
                     for amp in range(namps):
-                        ampavg = np.mean([rpix_top[amp][frm], rpix_bot[amp][frm]])
-                        delta = ampavg - superaverage
-                        amp_deltas.append(delta)
+                        meant = np.mean(rpt[amp], axis=0)
+                        meanb = np.mean(rpb[amp], axis=0)
+                        rpt_no_ga.append(rpt[amp]-meant)
+                        rpb_no_ga.append(rpb[amp]-meanb)
 
-                        rpix_top[amp][frm] -= delta
-                        rpix_bot[amp][frm] -= delta
+                    # if full frame imaging or spectroscopy and vertical ref pix corrections on
+                    if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
+                        rps_raw = [data[intn, :, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_side_sec]
 
-                    # Subtract the delta from the side reference pixel sections.
-                    rpix_side_fixed[0][frm] -= amp_deltas[0]     # first amplifier
-                    rpix_side_fixed[-1][frm] -= amp_deltas[-1]   # last amplifier
+                        # Restructure the vertical reference pixel sections to correspond to amplifiers.
+                        rpix_left, rpix_right = [], []
+                        for sec in range (len(rps_raw)):
+                            if sec % 2 == 0:
+                                rpix_right.append(rps_raw[sec])
+                            else:
+                                rpix_left.append(rps_raw[sec])
+                        rps = [np.hstack(rpix_left), np.hstack(rpix_right)]
 
-                    # Subtract the delta from the data pixel sections.
-                    for amp in range(len(datasec)):
-                        data[frm, datasec[amp].y1:datasec[amp].y2, datasec[amp].x1:datasec[amp].x2] -= amp_deltas[amp+1]
+                        rps_no_ga = []    # group averaged vertical reference pixels
+                        meanl = np.mean(rps[0], axis=0)
+                        meanr = np.mean(rps[1], axis=0)
+                        rps_no_ga.append(rps[0]-meanl)
+                        rps_no_ga.append(rps[1]-meanr)
 
-                # From the time array, which is the size of the original
-                # amplifier, slice out the corresponding horizontal and vertical
-                # reference pixels.
-                time_top = time[rpix_top_sec[0].y1:rpix_top_sec[0].y2, 0:amp_cols]
-                time_bot = time[rpix_bot_sec[0].y1:rpix_bot_sec[0].y2, 0:amp_cols]
-                time_side = time[rpix_side_sec[2].y1:-rpix_side_sec[2].y1, rpix_side_sec[0].x1:rpix_side_sec[0].x2]
+                    corrector_cube = np.empty_like(data[intn])
+                    # Loop over groups
+                    for grp in range(ngroups):
+                        # Calculate the linear regression coefficients.
+                        coeffs = []
+                        for amp in range(namps):
+                            rpix_horizontal = np.vstack([rpt_no_ga[amp][grp], rpb_no_ga[amp][grp]]).flatten()
+                            coeffs.append(np.polyfit(time_horizontal, rpix_horizontal, deg=1))
 
-                # Create lists for the arrays of horizontal and vertical ramp
-                # averages.
-                ramp_avg_top = []
-                ramp_avg_bot = []
-                ramp_avg_side = []
+                        # if full frame imaging or spectroscopy and vertical ref pix corrections on
+                        if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
+                            # Calculate the row averges for the top, side, and bottom reference pixels
+                            # in the first array.
+                            row_avg_top_left = np.mean(rpt_no_ga[0][grp], axis=1, keepdims=True)
+                            row_avg_bot_left = np.mean(rpb_no_ga[0][grp], axis=1, keepdims=True)
+                            row_avg_side_left = np.mean(rps_no_ga[0][grp], axis=1, keepdims=True)
+                            row_avg_left = np.vstack([row_avg_top_left, row_avg_side_left, row_avg_bot_left])
 
-                # Loop over the horizontal reference pixels to calculate their
-                # ramp averages.
-                for amp in range(len(rpix_top)):
-                    # Compute the ramp average for each pixel in this amplifier.
-                    ra_top = np.mean(rpix_top[amp], axis=0)
-                    ra_bot = np.mean(rpix_bot[amp], axis=0)
-                    ramp_avg_top.append(ra_top)
-                    ramp_avg_bot.append(ra_bot)
+                            # Repeat for the last amplifier
+                            row_avg_top_right = np.mean(rpt_no_ga[1][grp], axis=1, keepdims=True)
+                            row_avg_bot_right = np.mean(rpb_no_ga[1][grp], axis=1, keepdims=True)
+                            row_avg_side_right = np.mean(rps_no_ga[1][grp], axis=1, keepdims=True)
+                            row_avg_right = np.vstack([row_avg_top_right, row_avg_side_right, row_avg_bot_right])
 
-                # Loop over the vertical reference pixels to calculate their
-                # ramp averages.
-                for amp in range(len(rpix_side_fixed)):
-                    # Compute the ramp average for each pixel in this amplifier.
-                    ra_side = np.mean(rpix_side_fixed[amp], axis=0)
-                    ramp_avg_side.append(ra_side)
+                            # Construct a "high frequency" function for the first and last amplifiers
+                            # and average them row-wise.
+                            highfreq_left = row_avg_left - coeffs[0][1] - (coeffs[0][0] * time_row_avg)
+                            highfreq_right = row_avg_right - coeffs[-1][1] - (coeffs[-1][0] * time_row_avg)
+                            highfreq = (highfreq_left + highfreq_right) / 2
 
-                # Loop over the frames in the ramp.
-                for frm in range(nframes):
-                    # Create a list for the coefficients for this frame.
-                    coeffs = []
+                            # Now run the FFT smoothing function
+                            delt = 10E-6 * amp_cols
+                            smoothed_data = self._smoothFFT(highfreq, delt).reshape(highfreq.shape)
 
-                    # Loop over the amplifiers in this frame.
-                    for amp in range(namps):
-                        # Subtract the ramp average arrays for this amplifier.
-                        rpix_top[amp][frm] -= ramp_avg_top[amp]
-                        rpix_bot[amp][frm] -= ramp_avg_bot[amp]
+                        # Construct the 2D corrector arrays by amplifier
+                        corrector_by_amp = []
+                        for amp in range(namps):
+                            # if full frame iamging or spectroscopy and vertical ref pix corrections on
+                            if ((obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT") and do_vertical_correction:
+                                corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg) + smoothed_data
+                            else:
+                                corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg)
+                            corr = np.repeat(corr, amp_cols, axis=1)
+                            corrector_by_amp.append(corr)
+                        corrector_group = np.hstack(corrector_by_amp)    # 2048 x namps
 
-                        # Compute the linear regression coefficients for this
-                        # amplifier. Use the time array as the X axis and the
-                        # ramp-averaged horizontal reference pixels as the
-                        # Y axis.
-                        rpix_horizontal = np.vstack([rpix_top[amp][frm], rpix_bot[amp][frm]]).flatten()
-                        time_horizontal = np.vstack([time_top, time_bot]).flatten()
+                        # Extract the portions of the corrector array that are covered by the observation mode.
+                        # if full frame imaging or spectroscopy
+                        if (obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT":
+                            # See the section descriptor document for a picture of how this looks
+                            top_left = corrector_group[4:512, :4]          # vertical ref pixels
+                            bot_left = corrector_group[1536:2044, :4]      # vertical ref pixels
+                            top_right = corrector_group[4:512, -4:]        # vertical ref pixels
+                            bot_right = corrector_group[1536:2044, -4:]    # vertical ref pixels
 
-                        pfit = np.polyfit(time_horizontal, rpix_horizontal, deg=1)
-                        coeffs.append(pfit)
+                            top_zero = np.zeros((4, 4)) # zero padding top vertical ref pixels
+                            mid_zero = np.zeros((8, 4)) # zero padding middle vertical ref pixels
+                            bot_zero = np.zeros((4, 4)) # zero padding bottome vertical ref pixels
 
-                    # Loop over the amplifiers in this frame with the vertical
-                    # reference pixels.
-                    for amp in range(len(rpix_side_fixed)):
-                        # Subtract the ramp average array for this amplifier.
-                        rpix_side_fixed[amp][frm] -= ramp_avg_side[amp]
+                            left_ref = np.concatenate([top_zero, top_left, mid_zero, bot_left, bot_zero], axis=0)
+                            right_ref = np.concatenate([top_zero, top_right, mid_zero, bot_right, bot_zero], axis=0)
 
-                    # Row average the top, side, and bottom reference pixels in
-                    # the first amplifier. Stack them together into one array.
-                    row_avg_top_left = np.mean(rpix_top[0][frm], axis=1, keepdims=True)
-                    row_avg_bot_left = np.mean(rpix_bot[0][frm], axis=1, keepdims=True)
-                    row_avg_side_left = np.mean(rpix_side_fixed[0][frm], axis=1, keepdims=True)
-                    row_avg_left = np.vstack([row_avg_top_left, row_avg_side_left, row_avg_bot_left])
+                            top_ref = corrector_group[:4, :]     # horizontal ref pixels
+                            bot_ref = corrector_group[-4:, :]    # horizontal ref pixels
 
-                    # Repeat for the last amplifier.
-                    row_avg_top_right = np.mean(rpix_top[-1][frm], axis=1, keepdims=True)
-                    row_avg_bot_right = np.mean(rpix_bot[-1][frm], axis=1, keepdims=True)
-                    row_avg_side_right = np.mean(rpix_side_fixed[-1][frm], axis=1, keepdims=True)
-                    row_avg_right = np.vstack([row_avg_top_right, row_avg_side_right, row_avg_bot_right])
+                            sci = corrector_group[512:1536, :]    # active pixels and middle vertical ref pixels
 
-                    # Repeat for the time array.
-                    time_row_avg_top = np.mean(time_top, axis=1, keepdims=True)
-                    time_row_avg_bot = np.mean(time_bot, axis=1, keepdims=True)
-                    time_row_avg_side = np.mean(time_side, axis=1, keepdims=True)
-                    time_row_avg = np.vstack([time_row_avg_top, time_row_avg_side, time_row_avg_bot])
+                            corrector_group_cropped = np.concatenate([top_ref, sci, bot_ref], axis=0)
+                            corrector_group_cropped = np.concatenate([left_ref, corrector_group_cropped, right_ref], axis=1)
 
-                    # Construct a high frequency function for the first and
-                    # last amplifiers. Average the two functions, row-wise.
-                    highfreq_left = row_avg_left - coeffs[0][1] - (coeffs[0][0]*time_row_avg)
-                    highfreq_right = row_avg_right - coeffs[-1][1] - (coeffs[-1][0]*time_row_avg)
-                    highfreq = (highfreq_left + highfreq_right) / 2
-                    ny, nx = highfreq.shape
+                        # window imaging mode
+                        else:
+                            top_ref = corrector_group[:4, :]
+                            bot_ref = corrector_group[-4:, :]
+                            sci = corrector_group[970:1078, :]
+                            corrector_group_cropped = np.concatenate([top_ref, sci, bot_ref], axis=0)
 
-                    # Now begin the FFT smoothing.
-                    delt = 10E-6 * amp_shape[1]
-                    smoothed_data = self._smoothFFT(highfreq, delt).reshape((ny, nx))
+                        try:
+                            assert ext.data[intn][grp].shape == corrector_group_cropped.shape
+                        except AssertionError:
+                            log.error("Data shape does not match corrector shape")
+                            raise ValueError("Data shape does not match corrector shape")
 
-                    # Make the list for holding the amplifier correctors. Then
-                    # loop over the amplifiers and create the corrector function
-                    # for each amplifier. Each corrector should be shape
-                    # (2048, 1). Replicate this to be (2048, 64) (the size of
-                    # one amp). Then assemble the corrector array.
-                    correctors = []
-                    for amp in range(namps):
-                        corr = coeffs[amp][1] + (coeffs[amp][0] * time_row_avg) + smoothed_data
-                        corr = np.repeat(corr, amp_shape[1], 1)
-                        correctors.append(corr)
-                    corrector_array = np.hstack(correctors)
+                        corrector_cube[grp] = corrector_group_cropped
 
-                    # Restructure and trim the corrector array to the size of
-                    # the data array.
-                    # This only satisfies full FOV imaging mode.
-                    top_left = corrector_array[4:512, :4]       # vertical refpixels
-                    bot_left = corrector_array[1536:2044, :4]   # vertical refpixels
-                    top_right = corrector_array[4:512, -4:]     # vertical refpixels
-                    bot_right = corrector_array[1536:2044, -4:] # vertical refpixels
+                    # Take the original data array and subtract the corrector cube.
+                    # Then extract all horizontal reference pixels and get their average --> "superaverage"
+                    # Then loop over the groups, and the amps, and get the average per amplifier per group.
+                    # Calculate the "delta" subtracting the amp average from the superaverage.
+                    data_corrected = data[intn] - corrector_cube
+                    rpt_corrected = [data_corrected[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_top_sec]    # list of 3D numpy arrays
+                    rpb_corrected = [data_corrected[:, sec.y1:sec.y2, sec.x1:sec.x2] for sec in rpix_bot_sec]
+                    superaverage = np.mean([rpt_corrected, rpb_corrected])    # scalar
+                    for grp in range(ngroups):
+                        for amp in range(namps):
+                            amp_avg = np.mean([rpt_corrected[amp][grp], rpb_corrected[amp][grp]])    # scalar
+                            amp_delta = superaverage - amp_avg    # scalar
 
-                    top_zero = np.zeros((4,4)) # zero padding top vertical refpixels
-                    mid_zero = np.zeros((8,4)) # zero padding middle vertical refpixels
-                    bot_zero = np.zeros((4,4)) # zero padding bottom vertical refpixels
+                            data_corrected[grp, :, rpix_top_sec[amp].x1:rpix_top_sec[amp].x2] += amp_delta
 
-                    left_ref = np.concatenate([top_zero, top_left, mid_zero, bot_left, bot_zero], axis=0)
-                    right_ref = np.concatenate([top_zero, top_right, mid_zero, bot_right, bot_zero], axis=0)
+                            # if full frame imaging or spectroscopy
+                            if (obsmode == "IMAGE" and imtype == "FULL") or obsmode == "SPECT":
+                                if amp == 0:    # first amp
+                                    data_corrected[grp, 4:512, :4] += amp_delta
+                                    data_corrected[grp, 1536:2044, :4] += amp_delta
+                                elif amp == namps-1:
+                                    data_corrected[grp, 4:512, -4:] += amp_delta
+                                    data_corrected[grp, 1536:2044, -4:] += amp_delta
 
-                    top_ref = corrector_array[:4, :]    # horizontal refpixels
-                    bot_ref = corrector_array[-4:, :]   # horizontal refpixels
+                    new_ext_data[intn] = data_corrected
 
-                    sci = corrector_array[512:1536, :] # active pixels and middle vertical refpixels
+                ext.reset(new_ext_data)
 
-                    corrector_array = np.concatenate([top_ref, sci, bot_ref], axis=0)
-                    corrector_array = np.concatenate([left_ref, corrector_array, right_ref], axis=1)
-
-                    try:
-                        assert ext.data[frm].shape == corrector_array.shape
-                    except AssertionError:
-                        log.error("Data shape does not match corrector shape")
-                        raise ValueError("Data shape does not match corrector shape")
-
-                    # Subtract the corrector frame from the data in the
-                    # extension.
-                    ext.data[frm] -= corrector_array
-
-            # Update the filename.
+            # Update filename
             ad.update_filename(suffix=sfx, strip=True)
 
         return adinputs
@@ -739,24 +715,11 @@ class ScorpioNearIR(Scorpio, NearIR):
             # Get the keywords for all sections to be trimmed.
             datasec_kw = ad._keyword_for('data_section')
             darksec_kw = ad._keyword_for('dark_section')
-            #refsect_kw = ad._keyword_for('ref_sec_top')
-            #refsecb_kw = ad._keyword_for('ref_sec_bot')
-            #refsecs_kw = ad._keyword_for('ref_sec_side')
 
             all_datasecs = ad.data_section()
 
             for ext, datasec in zip(ad, all_datasecs):
-                # Trim SCI, VAR, DQ arrays
-                #ext.reset(ext.nddata[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
-
-                # And OBJMASK (if it exists)
-                #if hasattr(ext, 'OBJMASK'):
-                #    ext.OBJMASK = ext.OBJMASK[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-
-                # Temporarily use this to trim the arrays
-                ext.data = ext.data[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-                ext.variance = ext.variance[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
-                ext.mask = ext.mask[:, datasec.y1:datasec.y2, datasec.x1:datasec.x2]
+                ext.reset(ext.nddata[:, :, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
 
                 # Update the data section keywords in the header
                 sections, new_sections = gt.map_data_sections_to_trimmed_data(datasec)
@@ -772,15 +735,10 @@ class ScorpioNearIR(Scorpio, NearIR):
                     ext.hdr[f'{datasec_kw}{amp}'] = newDataSecStr
 
                 # Remove the reference pixel and dark section keywords from the headers
-                for amp in range(1,100):
-                    if f'{darksec_kw}{amp}' in ext.hdr:
-                        del ext.hdr[f'{darksec_kw}{amp}']
-                    if f'REFSCT{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCT{amp}']
-                    if f'REFSCB{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCB{amp}']
-                    if f'REFSCS{amp}' in ext.hdr:
-                        del ext.hdr[f'REFSCS{amp}']
+                del ext.hdr[f'{darksec_kw}*']
+                del ext.hdr[f'REFSCT*']
+                del ext.hdr[f'REFSCB*']
+                del ext.hdr[f'REFSCS*']
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
@@ -1743,10 +1701,10 @@ class ScorpioNearIR(Scorpio, NearIR):
             ndiff = 1
 
         for diff in range(ndiff):
-            Fltr_Spectrum = np.zeros_like(Dat_P,dtype=np.complex)
+            Fltr_Spectrum = np.zeros_like(Dat_P,dtype=complex)
             # make the filter complex
             i1 = 1; n2 = int((N-1)/2)+1; i2 = i1+n2
-            FltrCoef = LOPT[i1:].astype(np.complex)
+            FltrCoef = LOPT[i1:].astype(complex)
             # differentiation in frequency domain
             iW = ((np.arange(n2)+i1)*OMEGA*1j)**diff
             # multiply spectrum with filter coefficient
