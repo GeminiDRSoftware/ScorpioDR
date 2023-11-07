@@ -311,143 +311,144 @@ class ScorpioNearIR(Scorpio, NearIR):
 
         for ad in adinputs:
             for e, ext in enumerate(ad):
-                # Make a copy of the data so we don't make changes to it
-                data = ext.data.copy()
+                for intn in range(len(ext.data)):
+                    # Make a copy of the data so we don't make changes to it
+                    data = deepcopy(ext.data[intn])
 
-                # Get the number of frames averaged per group
-                nframes = ext.hdr["UTRFRAME"]
+                    # Get the number of frames averaged per group
+                    nframes = ext.hdr["UTRFRAME"]
 
-                # Get data characteristics
-                ngroups, nrows, ncols = data.shape
-                ndiffs = ngroups - 1
+                    # Get data characteristics
+                    ngroups, nrows, ncols = data.shape
+                    ndiffs = ngroups - 1
 
-                # Get the read noise array and square it, for use later
-                read_noise = gt.array_from_descriptor_value(ext, "read_noise")[0]
-                read_noise_2 = read_noise ** 2
+                    # Get the read noise array and square it, for use later
+                    read_noise = gt.array_from_descriptor_value(ext, "read_noise")[0][0]
+                    read_noise_2 = read_noise ** 2
 
-                # Set saturated values and pixels flagged as bad pixels in the
-                # input data array to NaN, so they don't get used in any of the
-                # subsequent calculations.
-                data[np.where(np.bitwise_and(ext.mask, DQ.saturated))] = np.nan
-                data[np.where(np.bitwise_and(ext.mask, DQ.bad_pixel))] = np.nan
+                    # Set saturated values and pixels flagged as bad pixels in the
+                    # input data array to NaN, so they don't get used in any of the
+                    # subsequent calculations.
+                    data[np.where(np.bitwise_and(ext.mask[intn], DQ.saturated))] = np.nan
+                    data[np.where(np.bitwise_and(ext.mask[intn], DQ.bad_pixel))] = np.nan
 
-                # Compute first differences of adjacent groups up the ramp.
-                # Note: roll the ngroups axis of data array to the end, to make
-                # memory access to the values for a given pixel faster.
-                # New form of the array has dimensions [nrows, ncols, ngroups].
-                first_diffs = np.diff(np.rollaxis(data, axis=0, start=3), axis=2)
-                positive_first_diffs = np.abs(first_diffs)
+                    # Compute first differences of adjacent groups up the ramp.
+                    # Note: roll the ngroups axis of data array to the end, to make
+                    # memory access to the values for a given pixel faster.
+                    # New form of the array has dimensions [nrows, ncols, ngroups].
+                    first_diffs = np.diff(np.rollaxis(data, axis=0, start=3), axis=2)
+                    positive_first_diffs = np.abs(first_diffs)
 
-                # sat_groups is a 3D array that is true when the group is
-                # saturated.
-                sat_groups = np.isnan(positive_first_diffs)
+                    # sat_groups is a 3D array that is true when the group is
+                    # saturated.
+                    sat_groups = np.isnan(positive_first_diffs)
 
-                # number_sat_groups is a 2D array with the count of saturated
-                # groups for each pixel.
-                number_sat_groups = sat_groups.sum(axis=2)
+                    # number_sat_groups is a 2D array with the count of saturated
+                    # groups for each pixel.
+                    number_sat_groups = sat_groups.sum(axis=2)
 
-                # Make all the first diffs for saturated groups be equal to
-                # 100,000 to put them above the good values in the sorted index.
-                first_diffs[np.isnan(first_diffs)] = 100000.
+                    # Make all the first diffs for saturated groups be equal to
+                    # 100,000 to put them above the good values in the sorted index.
+                    first_diffs[np.isnan(first_diffs)] = 100000.
 
-                # Here we sort the 3D array along the last axis, which is the
-                # group axis. np.argsort returns a 3D array with the last axis
-                # containing the indices that would yield the groups/diffs in
-                # order.
-                sort_index = np.argsort(positive_first_diffs)
+                    # Here we sort the 3D array along the last axis, which is the
+                    # group axis. np.argsort returns a 3D array with the last axis
+                    # containing the indices that would yield the groups/diffs in
+                    # order.
+                    sort_index = np.argsort(positive_first_diffs)
 
-                # median_diffs is a 2D array with the clipped median of each pixel
-                median_diffs = self._get_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
+                    # median_diffs is a 2D array with the clipped median of each pixel
+                    median_diffs = self._get_clipped_median(ndiffs, number_sat_groups, first_diffs, sort_index)
 
-                # Compute uncertainties as the quadrature sum of the poisson
-                # noise in the first difference signal and read noise. Because
-                # the first differences can be biased by CRs/jumps, we use the
-                # median signal for computing the poisson noise. Here we lower
-                # the read noise by the square root of number of frames in
-                # the group. Sigma is a 3D array.
-                poisson_noise = np.sqrt(np.abs(median_diffs))
-                poisson_noise_2 = poisson_noise ** 2
-                sigma = np.sqrt(poisson_noise_2 + read_noise_2 / nframes)
+                    # Compute uncertainties as the quadrature sum of the poisson
+                    # noise in the first difference signal and read noise. Because
+                    # the first differences can be biased by CRs/jumps, we use the
+                    # median signal for computing the poisson noise. Here we lower
+                    # the read noise by the square root of number of frames in
+                    # the group. Sigma is a 3D array.
+                    poisson_noise = np.sqrt(np.abs(median_diffs))
+                    poisson_noise_2 = poisson_noise ** 2
+                    sigma = np.sqrt(poisson_noise_2 + read_noise_2 / nframes)
 
-                # Reset sigma to exclude pixels with both readnoise and signal=0
-                sigma_0_pixels = np.where(sigma == 0.)
-                if len(sigma_0_pixels[0] > 0):
-                    #log.debug(f'Twopt found {len(sigma_0_pixels[0])} pixels with sigma=0')
-                    #log.debug('which will be reset so that no jump will be detected.')
-                    huge_num = np.finfo(np.float32).max
-                    sigma[sigma_0_pixels] = huge_num
+                    # Reset sigma to exclude pixels with both readnoise and signal=0
+                    sigma_0_pixels = np.where(sigma == 0.)
+                    if len(sigma_0_pixels[0] > 0):
+                        #log.debug(f'Twopt found {len(sigma_0_pixels[0])} pixels with sigma=0')
+                        #log.debug('which will be reset so that no jump will be detected.')
+                        huge_num = np.finfo(np.float32).max
+                        sigma[sigma_0_pixels] = huge_num
 
-                # Compute distance of each sample from the median in units of
-                # sigma; note that the use of "abs" means we'll detect positive
-                # and negative outliers. ratio is a 3D array with the units of
-                # sigma deviation of the difference from the median.
-                ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
+                    # Compute distance of each sample from the median in units of
+                    # sigma; note that the use of "abs" means we'll detect positive
+                    # and negative outliers. ratio is a 3D array with the units of
+                    # sigma deviation of the difference from the median.
+                    ratio = np.abs(first_diffs - median_diffs[:, :, np.newaxis]) / sigma[:, :, np.newaxis]
 
-                # Get the group index for each pixel of the largest
-                # non-saturated group, assuming the indices are sorted. 2 is
-                # subtracted from ngroups because we are using differences
-                # and there is one less difference than the number of groups.
-                # This is a 2D array.
-                max_value_index = ngroups - 2 - number_sat_groups
+                    # Get the group index for each pixel of the largest
+                    # non-saturated group, assuming the indices are sorted. 2 is
+                    # subtracted from ngroups because we are using differences
+                    # and there is one less difference than the number of groups.
+                    # This is a 2D array.
+                    max_value_index = ngroups - 2 - number_sat_groups
 
-                # Extract from the sorted group indices the index of the largest
-                # non-saturated group.
-                row, col = np.where(number_sat_groups >= 0)
-                max_index1d = sort_index[row, col, max_value_index[row, col]]
-                max_index1 = np.reshape(max_index1d, (nrows, ncols)) # reshape to a 2-D array
+                    # Extract from the sorted group indices the index of the largest
+                    # non-saturated group.
+                    row, col = np.where(number_sat_groups >= 0)
+                    max_index1d = sort_index[row, col, max_value_index[row, col]]
+                    max_index1 = np.reshape(max_index1d, (nrows, ncols)) # reshape to a 2-D array
 
-                # Get the row and column indices of pixels whose largest
-                # non-saturated ratio is above the threshold.
-                r, c = np.indices(max_index1.shape)
-                row1, col1 = np.where(ratio[r, c, max_index1] > rej_threshold)
-                #log.info(f'From highest outlier Two-point found {len(row1)} pixels with at least one CR')
+                    # Get the row and column indices of pixels whose largest
+                    # non-saturated ratio is above the threshold.
+                    r, c = np.indices(max_index1.shape)
+                    row1, col1 = np.where(ratio[r, c, max_index1] > rej_threshold)
+                    #log.info(f'From highest outlier Two-point found {len(row1)} pixels with at least one CR')
 
-                # Loop over all pixels that we found the first CR in
-                number_pixels_with_cr = len(row1)
-                for j in range(number_pixels_with_cr):
-                    # Extract the first diffs for this pixel with at least one
-                    # CR, yielding a 1-D array.
-                    pixel_masked_diffs = first_diffs[row1[j], col1[j]]
+                    # Loop over all pixels that we found the first CR in
+                    number_pixels_with_cr = len(row1)
+                    for j in range(number_pixels_with_cr):
+                        # Extract the first diffs for this pixel with at least one
+                        # CR, yielding a 1-D array.
+                        pixel_masked_diffs = first_diffs[row1[j], col1[j]]
 
-                    # Get the scalar readnoise^2 and number of saturated groups
-                    # for this pixel
-                    pixel_rn2 = read_noise_2[row1[j], col1[j]]
-                    pixel_sat_groups = number_sat_groups[row1[j], col1[j]]
+                        # Get the scalar readnoise^2 and number of saturated groups
+                        # for this pixel
+                        pixel_rn2 = read_noise_2[row1[j], col1[j]]
+                        pixel_sat_groups = number_sat_groups[row1[j], col1[j]]
 
-                    # Create a CR mask and set 1st CR to be found
-                    # cr_mask=0 designates a CR
-                    pixel_cr_mask = np.ones(pixel_masked_diffs.shape, dtype=bool)
-                    number_CRs_found = 1
-                    pixel_sorted_index = sort_index[row1[j], col1[j], :]
-                    pixel_cr_mask[pixel_sorted_index[ndiffs - pixel_sat_groups - 1]] = 0 # setting largest diff to be a CR
-                    new_CR_found = True
+                        # Create a CR mask and set 1st CR to be found
+                        # cr_mask=0 designates a CR
+                        pixel_cr_mask = np.ones(pixel_masked_diffs.shape, dtype=bool)
+                        number_CRs_found = 1
+                        pixel_sorted_index = sort_index[row1[j], col1[j], :]
+                        pixel_cr_mask[pixel_sorted_index[ndiffs - pixel_sat_groups - 1]] = 0 # setting largest diff to be a CR
+                        new_CR_found = True
 
-                    # Loop and see if there is more than one CR, setting the
-                    # mask as you go
-                    while new_CR_found and ((ndiffs - number_CRs_found - pixel_sat_groups) > 1):
-                        new_CR_found = False
-                        # For this pixel get a new median difference excluding
-                        # the number of CRs found and the number of saturated
-                        # groups
-                        pixel_med_diff = self._get_clipped_median(ndiffs, number_CRs_found + pixel_sat_groups,
-                                                                  pixel_masked_diffs, pixel_sorted_index)
+                        # Loop and see if there is more than one CR, setting the
+                        # mask as you go
+                        while new_CR_found and ((ndiffs - number_CRs_found - pixel_sat_groups) > 1):
+                            new_CR_found = False
+                            # For this pixel get a new median difference excluding
+                            # the number of CRs found and the number of saturated
+                            # groups
+                            pixel_med_diff = self._get_clipped_median(ndiffs, number_CRs_found + pixel_sat_groups,
+                                                                      pixel_masked_diffs, pixel_sorted_index)
 
-                        # Recalculate the noise and ratio for this pixel now
-                        # that we have rejected a CR
-                        pixel_poisson_noise = np.sqrt(np.abs(pixel_med_diff))
-                        pixel_poisson_noise_2 = pixel_poisson_noise ** 2
-                        pixel_sigma = np.sqrt(pixel_poisson_noise_2 + pixel_rn2 / nframes)
-                        pixel_ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / pixel_sigma
+                            # Recalculate the noise and ratio for this pixel now
+                            # that we have rejected a CR
+                            pixel_poisson_noise = np.sqrt(np.abs(pixel_med_diff))
+                            pixel_poisson_noise_2 = pixel_poisson_noise ** 2
+                            pixel_sigma = np.sqrt(pixel_poisson_noise_2 + pixel_rn2 / nframes)
+                            pixel_ratio = np.abs(pixel_masked_diffs - pixel_med_diff) / pixel_sigma
 
-                        # Check if largest remaining difference is above threshold
-                        if pixel_ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
-                            new_CR_found = True
-                            pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] = 0
-                            number_CRs_found += 1
+                            # Check if largest remaining difference is above threshold
+                            if pixel_ratio[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] > rej_threshold:
+                                new_CR_found = True
+                                pixel_cr_mask[pixel_sorted_index[ndiffs - number_CRs_found - pixel_sat_groups - 1]] = 0
+                                number_CRs_found += 1
 
-                    # Found all CRs for this pixel. Set CR flags in input DQ array for this pixel
-                    ext.mask[1:, row1[j], col1[j]] = \
-                        np.bitwise_or(ext.mask[1:, row1[j], col1[j]], DQ.cosmic_ray * np.invert(pixel_cr_mask))
+                        # Found all CRs for this pixel. Set CR flags in input DQ array for this pixel
+                        ext.mask[1:, row1[j], col1[j]] = \
+                            np.bitwise_or(ext.mask[intn, 1:, row1[j], col1[j]], DQ.cosmic_ray * np.invert(pixel_cr_mask))
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
