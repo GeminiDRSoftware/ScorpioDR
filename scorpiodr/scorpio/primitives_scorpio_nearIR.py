@@ -4,6 +4,7 @@
 #                                            primitives_scorpio_spect_nearIR.py
 # ------------------------------------------------------------------------------
 
+import astrodata
 from geminidr.gemini.lookups import DQ_definitions as DQ
 from gempy.gemini import gemini_tools as gt
 
@@ -160,85 +161,101 @@ class ScorpioNearIR(Scorpio, NearIR):
         min_iter = 1
         max_iter = 1
 
+        adoutputs = []
         for ad in adinputs:
+            new_ad = astrodata.create(ad.phu)
+
             for e, ext in enumerate(ad):
-                # Get data from this extension.
-                input_var_sect_2 = ext.variance ** 2
-                gdq_sect = ext.mask
-                readnoise_sect = gt.array_from_descriptor_value(ext, 'read_noise')[0]
-                gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0]
-                frame_time = 0.38 #ext.hdr['INTTIME']
-                group_time = frame_time * (ext.hdr['UTRFRAME'] + ext.hdr['UTRSKIP'])
-                nframes = ext.hdr['UTRFRAME']
-                max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
+                ints, groups, rows, cols = ext.data.shape
+                new_ext_data = np.empty((ints, rows, cols), dtype=ext.data.dtype)
+                new_ext_mask = np.empty((ints, rows, cols), dtype=ext.mask.dtype)
+                new_ext_variance = np.empty((ints, rows, cols), dtype=ext.variance.dtype)
+                new_ad.append(new_ext_data, header=ext.hdr)
 
-                # These will be updated in the loop.
-                prev_slope_sect = (ext.data[1, :, :] - ext.data[0, :, :]) / group_time
-                prev_fit = ext.data.copy()
+                for intn in range(len(ext.data)):
+                    # Get data from this extension.
+                    input_var_sect_2 = ext.variance[intn] ** 2
+                    gdq_sect = ext.mask[intn]
+                    readnoise_sect = gt.array_from_descriptor_value(ext, 'read_noise')[0][0]
+                    gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0][0]
+                    frame_time = 0.38 #ext.hdr['INTTIME']
+                    group_time = frame_time * (ext.hdr['UTRFRAME'] + ext.hdr['UTRSKIP'])
+                    nframes = ext.hdr['UTRFRAME']
+                    max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
 
-                iter = 0
-                done = False
-                while not done:
-                    (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
-                     cr_sect, cr_var_sect) = \
-                        self._compute_slope(ext.data, input_var_sect_2, gdq_sect,
-                                            readnoise_sect, gain_sect,
-                                            prev_fit, prev_slope_sect,
-                                            frame_time, group_time, nframes,
-                                            max_num_cr, DQ.saturated, DQ.cosmic_ray)
-                    iter += 1
-                    if iter >= max_iter:
-                        done = True
-                    else:
-                        # If there are pixels with zero or negative variance,
-                        # ignore them when taking the difference between the
-                        # slopes computed in the current and previous
-                        # iterations.
-                        slope_diff = np.where(slope_var_sect > 0., prev_slope_sect - slope_sect, 0.)
-                        max_slope_diff = np.abs(slope_diff).max()
+                    data = deepcopy(ext.data[intn])
 
-                        if iter >= min_iter and max_slope_diff < slope_diff_cutoff:
+                    # These will be updated in the loop.
+                    prev_slope_sect = (data[1, :, :] - data[0, :, :]) / group_time
+                    prev_fit = deepcopy(data)
+
+                    iter = 0
+                    done = False
+                    while not done:
+                        (intercept_sect, int_var_sect, slope_sect, slope_var_sect,
+                         cr_sect, cr_var_sect) = \
+                            self._compute_slope(data, input_var_sect_2, gdq_sect,
+                                                readnoise_sect, gain_sect,
+                                                prev_fit, prev_slope_sect,
+                                                frame_time, group_time, nframes,
+                                                max_num_cr, DQ.saturated, DQ.cosmic_ray)
+                        iter += 1
+                        if iter >= max_iter:
                             done = True
+                        else:
+                            # If there are pixels with zero or negative variance,
+                            # ignore them when taking the difference between the
+                            # slopes computed in the current and previous
+                            # iterations.
+                            slope_diff = np.where(slope_var_sect > 0., prev_slope_sect - slope_sect, 0.)
+                            max_slope_diff = np.abs(slope_diff).max()
 
-                        current_fit = self._evaluate_fit(intercept_sect, slope_sect, cr_sect,
-                                                   frame_time, group_time, gdq_sect, DQ.cosmic_ray)
+                            if iter >= min_iter and max_slope_diff < slope_diff_cutoff:
+                                done = True
 
-                        prev_fit = self._positive_fit(current_fit)    # use for next iteration
-                        del current_fit
+                            current_fit = self._evaluate_fit(intercept_sect, slope_sect, cr_sect,
+                                                       frame_time, group_time, gdq_sect, DQ.cosmic_ray)
 
-                        prev_slope_sect = slope_sect.copy()
+                            prev_fit = self._positive_fit(current_fit)    # use for next iteration
+                            del current_fit
 
-                # Create a basis for the 2D data quality array
-                temp_dq = np.zeros((gdq_sect.shape[1], gdq_sect.shape[2]), dtype=DQ.datatype)
+                            prev_slope_sect = slope_sect.copy()
 
-                # Replace zero or negative variances with this:
-                LARGE_VARIANCE = 1.e8
+                    # Create a basis for the 2D data quality array
+                    temp_dq = np.zeros((gdq_sect.shape[1], gdq_sect.shape[2]), dtype=DQ.datatype)
 
-                v_mask = (slope_var_sect <= 0.)
-                if v_mask.any():
-                    # Replace negative or zero variances with a large value.
-                    slope_var_sect[v_mask] = LARGE_VARIANCE
-                    # Also set a flag in the pixel dq array.
-                    temp_dq[v_mask] = DQ.bad_pixel
-                    del v_mask
+                    # Replace zero or negative variances with this:
+                    LARGE_VARIANCE = 1.e8
 
-                # If a pixel was flagged (by an earlier step) as saturated in
-                # the first group, flag the pixel as bad.
-                s_mask = (gdq_sect[0] == DQ.saturated)
-                if s_mask.any():
-                    temp_dq[s_mask] = DQ.bad_pixel
+                    v_mask = (slope_var_sect <= 0.)
+                    if v_mask.any():
+                        # Replace negative or zero variances with a large value.
+                        slope_var_sect[v_mask] = LARGE_VARIANCE
+                        # Also set a flag in the pixel dq array.
+                        temp_dq[v_mask] = DQ.bad_pixel
+                        del v_mask
 
-                # Compress the DQ array 3D -> 2D
-                pixel_dq = self._dq_compress_sect(gdq_sect, temp_dq)
+                    # If a pixel was flagged (by an earlier step) as saturated in
+                    # the first group, flag the pixel as bad.
+                    s_mask = (gdq_sect[0] == DQ.saturated)
+                    if s_mask.any():
+                        temp_dq[s_mask] = DQ.bad_pixel
 
-                ext.data = slope_sect
-                ext.variance = np.sqrt(slope_var_sect)
-                ext.mask = pixel_dq
+                    # Compress the DQ array 3D -> 2D
+                    pixel_dq = self._dq_compress_sect(gdq_sect, temp_dq)
+
+                    new_ext_data[intn] = slope_sect
+                    new_ext_mask[intn] = pixel_dq
+                    new_ext_variance[intn] = np.sqrt(slope_var_sect)
+
+                new_ad[e].reset(new_ext_data, mask=new_ext_mask, variance=new_ext_variance)
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
+            new_ad.filename = ad.filename
+            adoutputs.append(new_ad)
 
-        return adinputs
+        return adoutputs
 
     def flagCosmicRaysFromNDRs(self, adinputs=None, **params):
         """
