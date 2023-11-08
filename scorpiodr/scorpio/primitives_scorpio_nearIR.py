@@ -464,7 +464,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                                 number_CRs_found += 1
 
                         # Found all CRs for this pixel. Set CR flags in input DQ array for this pixel
-                        ext.mask[1:, row1[j], col1[j]] = \
+                        ext.mask[intn, 1:, row1[j], col1[j]] = \
                             np.bitwise_or(ext.mask[intn, 1:, row1[j], col1[j]], DQ.cosmic_ray * np.invert(pixel_cr_mask))
 
             # Update the filename.
