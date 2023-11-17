@@ -248,7 +248,21 @@ class ScorpioNearIR(Scorpio, NearIR):
                     new_ext_mask[intn] = pixel_dq
                     new_ext_variance[intn] = np.sqrt(slope_var_sect)
 
-                new_ad[e].reset(new_ext_data, mask=new_ext_mask, variance=new_ext_variance)
+                # Remove the extra integration axis for CAL images. Eventually this should be
+                # moved elsewhere in ScorpioDR.
+                # Return a 2D array per extension for CAL images.
+                # Otherwise return a 3D array for SCI images.
+                if "CAL" in ad.tags:
+                    try:
+                        assert len(new_ext_data) == 1
+                        assert len(new_ext_mask) == 1
+                        assert len(new_ext_variance) == 1
+                    except AssertionError:
+                        log.error("CAL integration axis dimension exceeds 1")
+                        raise ValueError("CAL integration axis dimension exceeds 1")
+                    new_ad[e].reset(new_ext_data[0], mask=new_ext_mask[0], variance=new_ext_variance[0])
+                else:
+                    new_ad[e].reset(new_ext_data, mask=new_ext_mask, variance=new_ext_variance)
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
