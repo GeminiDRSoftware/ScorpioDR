@@ -11,6 +11,7 @@ from gempy.gemini import gemini_tools as gt
 from geminidr.core import CCD
 from .primitives_scorpio import Scorpio
 from . import parameters_scorpio_ccd
+from copy import deepcopy
 
 import astrodata
 import numpy as np
@@ -79,7 +80,7 @@ class ScorpioCCD(Scorpio, CCD):
                     variance_list = []
                     for i in range(nints):
                         temp_ad = astrodata.create(ad.phu)
-                        temp_ad.append(ext.nddata[i], header=ext.hdr)
+                        temp_ad.append(ext.nddata[i], header=deepcopy(ext.hdr))
                         os_subtracted = super().subtractOverscan(adinputs=[temp_ad], **params)
                         data_list.append(os_subtracted[0][0].data)
                         mask_list.append(os_subtracted[0][0].mask)
@@ -109,7 +110,7 @@ class ScorpioCCD(Scorpio, CCD):
                     variance_list = []
                     for i in range(nints):
                         temp_ad = astrodata.create(ad.phu)
-                        temp_ad.append(ext.nddata[i], header=ext.hdr)
+                        temp_ad.append(ext.nddata[i], header=deepcopy(ext.hdr))
                         os_trimmed = super().trimOverscan(adinputs=[temp_ad], suffix=suffix)
                         data_list.append(os_trimmed[0][0].data)
                         mask_list.append(os_trimmed[0][0].mask)
