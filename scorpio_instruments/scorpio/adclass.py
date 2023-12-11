@@ -320,9 +320,12 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def refpix_section(self, pretty=False):
+        useSidePixels = True if self.phu.get('OBSMODE') == "spect" or self.phu.get('OBSMODE') == 'image' and self.phu.get('IMTYPE') == "full" else False
+
         topsec = self._build_section_lists('REFSCT', pretty=pretty)
         botsec = self._build_section_lists('REFSCB', pretty=pretty)
-        sidesec = self._build_section_lists('REFSCS', pretty=pretty)
+        if useSidePixels:
+            sidesec = self._build_section_lists('REFSCS', pretty=pretty)
 
         if self.is_single:
             top = (tuple_to_section(topsec, pretty=pretty) 
@@ -333,11 +336,13 @@ class AstroDataScorpio(AstroDataGemini):
                    if isinstance(botsec, Section) else
                    (",".join(tuple_to_section(sec, pretty=True) for sec in botsec)
                     if pretty else botsec))
-            side = (tuple_to_section(sidesec, pretty=pretty) 
-                    if isinstance(sidesec, Section) else
-                    (",".join(tuple_to_section(sec, pretty=True) for sec in sidesec)
-                     if pretty else sidesec))
-            return ({'top':top, 'bottom':bot, 'side':side})
+            if useSidePixels:
+                side = (tuple_to_section(sidesec, pretty=pretty) 
+                        if isinstance(sidesec, Section) else
+                        (",".join(tuple_to_section(sec, pretty=True) for sec in sidesec)
+                         if pretty else sidesec))
+                return ({'top':top, 'bottom':bot, 'side':side})
+            return ({'top':top, 'bottom':bot})
 
         top = [tuple_to_section(tsec, pretty=pretty)
                if isinstance(tsec, Section) else
@@ -347,11 +352,13 @@ class AstroDataScorpio(AstroDataGemini):
                if isinstance(bsec, Section) else
                (",".join(tuple_to_section(sec, pretty=True) for sec in bsec)
                 if pretty else bsec) for bsec in botsec]
-        side = [tuple_to_section(ssec, pretty=pretty)
-               if isinstance(ssec, Section) else
-               (",".join(tuple_to_section(sec, pretty=True) for sec in ssec)
-                if pretty else ssec) for ssec in sidesec]
-        return ({'top':top, 'bottom':bot, 'side':side})
+        if useSidePixels:
+            side = [tuple_to_section(ssec, pretty=pretty)
+                   if isinstance(ssec, Section) else
+                   (",".join(tuple_to_section(sec, pretty=True) for sec in ssec)
+                    if pretty else ssec) for ssec in sidesec]
+            return ({'top':top, 'bottom':bot, 'side':side})
+        return ({'top':top, 'bottom':bot})
 
     @astro_data_descriptor
     def saturation_level(self):
