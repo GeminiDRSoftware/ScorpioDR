@@ -31,8 +31,6 @@ def reduce(p):
     p.resampleToCommonFrame()
     p.flagCosmicRaysByStacking()
     p.stackFrames(zero=True)  # TBD if zero=True or other setting needed.
-    #p.detectSources()
-    #p.fluxCalibrate()  # adds a zeropoint.  use calibrator or catalog.
     return
 
 _default = reduce

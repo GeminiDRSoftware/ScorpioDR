@@ -4,7 +4,6 @@
 from gempy.library import config
 from geminidr.core import parameters_ccd
 from geminidr.gemini import parameters_gemini
-#from geminidr.core import parameters_ccd  # import core pkgs as needed.
 
 class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
@@ -16,8 +15,4 @@ class overscanCorrectConfig(parameters_ccd.overscanCorrectConfig):
         self.order = 0
         self.bias_type = "serial"
 
-class myNewPrimitive(config.Config):
-    suffix = config.Field("Filename suffix", str, "_suffix")
-    param1 = config.Field("Param1", str, "default")
-    param2 = config.Field("do param2?", bool, False)
 

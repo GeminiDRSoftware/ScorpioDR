@@ -4,7 +4,6 @@
 # redefine them here in filter_wavelengths.
 
 filter_wavelengths = {
-    #'Ks' : 2.1570,
     'g'   : 0.469,
     'r'   : 0.622, 
     'i'   : 0.755, 

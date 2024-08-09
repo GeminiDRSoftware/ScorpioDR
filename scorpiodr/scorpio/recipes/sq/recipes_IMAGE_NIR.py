@@ -44,8 +44,6 @@ def reduce(p):
     p.adjustWCSToReference()
     p.resampleToCommonFrame()
     p.stackFrames()
-    #p.detectSources()
-    #p.fluxCalibrate()  # adds a zeropoint. use calibrator or catalog
     return
 
 _default = reduce
