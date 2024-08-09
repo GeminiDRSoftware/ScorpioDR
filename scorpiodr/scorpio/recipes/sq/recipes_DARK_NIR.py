@@ -19,13 +19,25 @@ def makeProcessedDark(p):
         A primitive set matching the recipe_tags.
     """
 
+    #p.prepare()
+    #p.addDQ()
+    #p.addVAR(read_noise=True)
+    #p.nonlinearityCorrect()
+    #p.ADUToElectrons()
+    #p.nonlinearityCorrect()
+    #p.addVAR(poisson_noise=True)
+    #p.stackDarks()
+    #p.storeProcessedDark()
+
     p.prepare()
     p.addDQ()
     p.addVAR(read_noise=True)
     p.nonlinearityCorrect()
     p.ADUToElectrons()
-    p.nonlinearityCorrect()
     p.addVAR(poisson_noise=True)
+    p.referencePixelsCorrect()
+    p.flagCosmicRaysFromNDRs()
+    p.calculateSignalByRegression()
     p.stackDarks()
     p.storeProcessedDark()
     return

@@ -18,12 +18,26 @@ def makeProcessedFlat(p):
         A primitive set matching the recipe_tags.
     """
 
+    #p.prepare()
+    #p.addDQ()
+    #p.addVAR(read_noise=True)
+    #p.nonlinearityCorrect()
+    #p.ADUToElectrons()
+    #p.addVAR(poisson_noise=True)
+    #p.makeLampFlat()
+    #p.normalizeFlat()
+    #p.thresholdFlatfield()
+    #p.storeProcessedFlat()
+
     p.prepare()
     p.addDQ()
     p.addVAR(read_noise=True)
     p.nonlinearityCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
+    p.referencePixelsCorrect()
+    p.flagCosmicRaysFromNDRs()
+    p.calculateSignalByRegression()
     p.makeLampFlat()
     p.normalizeFlat()
     p.thresholdFlatfield()

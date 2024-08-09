@@ -12,6 +12,8 @@ from .primitives_scorpio_nearIR import ScorpioNearIR
 from . import parameters_scorpio_nearIR_image
 
 from recipe_system.utils.decorators import parameter_override
+
+import numpy as np
 # ------------------------------------------------------------------------------
 
 @parameter_override

@@ -3,6 +3,9 @@
 
 from gempy.library import config
 
+class stackIntegrationsConfig(config.Config):
+    suffix = config.Field("Filename suffix", str, "_integrationsStacked", optional=True)
+
 class somePrimitive(config.Config):
     suffix = config.Field("Filename suffix", str, "_suffix")
     param1 = config.Field("Param1", str, "default")

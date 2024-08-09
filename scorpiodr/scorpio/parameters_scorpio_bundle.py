@@ -3,7 +3,12 @@
 
 from gempy.library import config
 
+"""
 class somePrimitive(config.Config):
     suffix = config.Field("Filename suffix", str, "_suffix")
     param1 = config.Field("Param1", str, "default")
     param2 = config.Field("do param2?", bool, False)
+"""
+
+class separateChannelsConfig(config.Config):
+    suffix = config.Field("Filename suffix", str, "_unbundled", optional=True)

@@ -21,12 +21,15 @@ def reduce(p):
     p.ADUToElectrons()
     p.addVAR(read_noise=True, poisson_noise=True)
     p.nonlinearityCorrect()
+    p.referencePixelsCorrect()
+    p.flagCosmicRaysFromNDRs()
+    p.calculateSignalByRegression()
     p.darkCorrect()
     p.flatCorrect()
 
     # Initial sky subtraction (pre-masking)
     p.separateSky()
-    p.associateSky(stream='sky')
+    #p.associateSky(stream='sky')
     p.skyCorrect(instream='sky', mask_objects=False, outstream='skysub')
 
     # mask sources in sky frames
@@ -35,7 +38,7 @@ def reduce(p):
     p.clearStream(stream='skysub')
 
     # proper sky subtraction with source masked.
-    p.associateSky()
+    #p.associateSky()
     p.skyCorrect(mask_objects=True)
     p.detectSources()
     p.adjustWCSToReference()
