@@ -22,8 +22,9 @@ class ScorpioNearIRSpect(ScorpioNearIR, Spect):
 
     tagset = set(['GEMINI', 'SCORPIO', 'SPECT', 'NIR'])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioNearIRSpect, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioNearIRSpect, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR_spect)
 

@@ -27,8 +27,9 @@ class ScorpioCCD(Scorpio, CCD):
 
     tagset = set(['GEMINI', 'SCORPIO', 'CCD'])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioCCD, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioCCD, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_ccd)
 

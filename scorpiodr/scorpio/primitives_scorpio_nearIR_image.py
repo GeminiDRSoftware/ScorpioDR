@@ -24,8 +24,9 @@ class ScorpioNearIRImage(ScorpioNearIR, Image, Photometry):
 
     tagset = set(['GEMINI', 'SCORPIO', 'IMAGE', 'NIR'])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioNearIRImage, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioNearIRImage, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR_image)
 
