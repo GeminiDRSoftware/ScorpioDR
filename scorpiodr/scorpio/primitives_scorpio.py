@@ -7,6 +7,8 @@
 import astrodata
 import numpy as np
 from geminidr.gemini.primitives_gemini import Gemini
+from geminidr.core.primitives_visualize import Visualize
+from gempy.adlibrary.manipulate_ad import remove_single_length_dimension
 from gempy.gemini import gemini_tools as gt
 
 from . import parameters_scorpio
@@ -63,12 +65,100 @@ class Scorpio(Gemini):
                     data_list.append(dark_corrected[0][0].data)
                     mask_list.append(dark_corrected[0][0].mask)
                     variance_list.append(dark_corrected[0][0].variance)
-                ext.reset(np.array(data_list), 
-                                   mask=np.array(mask_list), 
+                ext.reset(np.array(data_list),
+                                   mask=np.array(mask_list),
                                    variance=np.array(variance_list))
             ad.phu.set('DARKIM', dark.filename, self.keyword_comments['DARKIM'])
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=suffix, strip=True)
+        return adinputs
+
+    def display(self, adinputs=None, **params):
+        """
+        Displays an image on the ds9 display, using multiple frames if
+        there are multiple extensions or integrations. Saturated pixels can be
+        displayed in red, and overlays can also be shown.
+
+        SCORPIO data is 4D (the axes are [integrations, up-the-ramp, y, x]), so
+        it needs to be reduced to 2D frames in their own extensions before passing
+        it up to the DRAGONS `display` primitive for display. Each type of data
+        (visible, IR) has its own complication to handle: the visible data needs
+        to have the overscan subtracted for each quadrant, while the IR data has
+        multiple up-the-ramp frames that need handling in order to display it.
+        """
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+
+        # No-op if ignore=True
+        if params["ignore"]:
+            log.warning("display turned off per user request")
+            return
+
+        adoutputs = []
+        for ad in adinputs:
+            # We split out data along the integrations axis into individual
+            # frames, which will be added as extensions to a new astrodata
+            # object to be sent to the DRAGONS `display()`.
+            new_ad = astrodata.create(ad.phu)
+            new_ad.filename = ad.filename
+
+            for ext in ad:
+                if ext.data.dtype.kind == 'u':
+                    # unsigned integer, can cause integer underflow, so recast
+                    # to int
+                    ext.data = ext.data.astype(dtype=int, casting='same_kind',
+                                               copy=False)
+
+                # IR data with up-the-ramp
+                if ext.data.shape[1] > 1:
+                    # Create a new data structure to hold the data in, minus
+                    # the up-the-ramp axis.
+                    new_data = np.empty([ext.data.shape[0],
+                                         ext.data.shape[2],
+                                         ext.data.shape[3]],
+                                        dtype=int)
+                    for i in range(ext.data.shape[0]):
+                        # Perform a quick-'n'-dirty 'last minus first' subtraction
+                        # of the up-the-ramp axis
+                        log.debug("Subtracting last up-the-ramp frame from "
+                                  f"first in integration {i+1}")
+                        new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
+                                                        ext.data[i, 0, :, :],
+                                                        dtype=(int, int))
+
+                # Visible data with no up-the-ramp, but need to bias-correct
+                else:
+                    overscans = ext.overscan_section()
+                    # Handle each frame in the integrations axis:
+                    for i in range(ext.data.shape[0]):
+                        # Handle each of the four quadrants making up the array;
+                        # they each have strips along their two outside edges
+                        # for the overscan correction.
+                        for j in range(4):
+                            sec_s = overscans['serial'][j]
+                            sec_p = overscans['parallel'][j]
+                            arrs = np.ravel(ext.data[i, :, sec_s.y1:sec_s.y2,
+                                                           sec_s.x1:sec_s.x2])
+                            arrp = np.ravel(ext.data[i, :, sec_p.y1:sec_p.y2,
+                                                           sec_p.x1:sec_p.x2])
+
+                            bias_level = np.median(np.concatenate([arrs, arrp]))
+                            log.debug(f"Subtracting overscan of {int(bias_level)}"
+                                      f" from quadrant {j} of integration {i+1}")
+                            ext.data[i, :, sec_s.y1:sec_s.y2,
+                                           sec_p.x1:sec_p.x2] -= int(bias_level)
+
+                    new_data = ext.data
+
+                # Split up frames along the integrations axis into extensions
+                for i in range(new_data.shape[0]):
+                    new_ad.append(ext)
+                    new_ad[-1].data = new_data[i, :, :]
+
+            adoutputs.append(new_ad)
+
+        super().display(adinputs=adoutputs, **params)
+
         return adinputs
 
     def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_cal=None):
@@ -92,8 +182,8 @@ class Scorpio(Gemini):
                     data_list.append(flat_corrected[0][0].data)
                     mask_list.append(flat_corrected[0][0].mask)
                     variance_list.append(flat_corrected[0][0].variance)
-                ext.reset(np.array(data_list), 
-                                   mask=np.array(mask_list), 
+                ext.reset(np.array(data_list),
+                                   mask=np.array(mask_list),
                                    variance=np.array(variance_list))
             ad.phu.set("FLATIM", flat.filename, self.keyword_comments["FLATIM"])
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
@@ -161,7 +251,7 @@ class Scorpio(Gemini):
                             "standardizeInstrumentHeaders".format(ad.filename))
                 continue
 
-            # Standardize the headers of the input AstroData object. Update the 
+            # Standardize the headers of the input AstroData object. Update the
             # keywords in the headers that are specific to SCORPIO.
             log.status("Updating keywords that are specific to SCORPIO")
 
