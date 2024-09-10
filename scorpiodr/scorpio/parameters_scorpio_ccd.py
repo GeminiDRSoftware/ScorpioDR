@@ -13,6 +13,9 @@ class overscanCorrectConfig(parameters_ccd.overscanCorrectConfig):
     def setDefaults(self):
         self.function = "spline3"
         self.order = 0
-        self.bias_type = "serial"
 
-
+class subtractOverscanConfig(parameters_ccd.subtractOverscanConfig):
+    bias_type = config.ChoiceField("Overscan region to use", str,
+                                   allowed={"serial": "Serial overscan region",
+                                            "parallel": "Parallel overscan region"},
+                                   default="serial", optional=True)
