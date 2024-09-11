@@ -94,70 +94,87 @@ class Scorpio(Gemini):
             log.warning("display turned off per user request")
             return
 
-        adoutputs = []
+        display_ads = []
         for ad in adinputs:
-            # We split out data along the integrations axis into individual
-            # frames, which will be added as extensions to a new astrodata
-            # object to be sent to the DRAGONS `display()`.
-            new_ad = astrodata.create(ad.phu)
-            new_ad.filename = ad.filename
-
+            # Simulated data uses unsigned ints, which can underflow. Recast.
             for ext in ad:
-                if ext.data.dtype.kind == 'u':
-                    # unsigned integer, can cause integer underflow, so recast
-                    # to int
+                if ext.data.dtype.kind == 'u':  # any unsigned integer
                     ext.data = ext.data.astype(dtype=int, casting='same_kind',
                                                copy=False)
 
-                # IR data with up-the-ramp
-                if ext.data.shape[1] > 1:
-                    # Create a new data structure to hold the data in, minus
-                    # the up-the-ramp axis.
-                    new_data = np.empty([ext.data.shape[0],
-                                         ext.data.shape[2],
-                                         ext.data.shape[3]],
-                                        dtype=int)
-                    for i in range(ext.data.shape[0]):
-                        # Perform a quick-'n'-dirty 'last minus first' subtraction
-                        # of the up-the-ramp axis
-                        log.debug("Subtracting last up-the-ramp frame from "
-                                  f"first in integration {i+1}")
-                        new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
-                                                        ext.data[i, 0, :, :],
-                                                        dtype=(int, int))
+                # Create a new astrodata object to hold any modified data that
+                # might be needed, depending on the processing level
+                new_ad = astrodata.create(ad.phu)
+                new_ad.filename = ad.filename
 
-                # Visible data with no up-the-ramp, but need to bias-correct
-                else:
-                    overscans = ext.overscan_section()
-                    # Handle each frame in the integrations axis:
-                    for i in range(ext.data.shape[0]):
-                        # Handle each of the four quadrants making up the array;
-                        # they each have strips along their two outside edges
-                        # for the overscan correction.
-                        for j in range(4):
-                            sec_s = overscans['serial'][j]
-                            sec_p = overscans['parallel'][j]
-                            arrs = np.ravel(ext.data[i, :, sec_s.y1:sec_s.y2,
-                                                           sec_s.x1:sec_s.x2])
-                            arrp = np.ravel(ext.data[i, :, sec_p.y1:sec_p.y2,
-                                                           sec_p.x1:sec_p.x2])
+                # Start by checking the shape of the data to see how raw/processed
+                # it is, which determines what we need to do to it.
+                if len(ext.data.shape) == 4:
+                    # data shape is (integrations, up-the-ramp, y, x)
+                    if 'NIR' in ad.tags:
+                        # Create a new data structure to hold the data in,
+                        # minus the up-the-ramp axis which goes away.
+                        new_data = np.empty([ext.data.shape[0],
+                                             ext.data.shape[2],
+                                             ext.data.shape[3]],
+                                            dtype=int)
+                        for i in range(ext.data.shape[0]):
+                            # Perform a quick-'n'-dirty 'last minus first'
+                            # subtraction of the up-the-ramp axis
+                            log.debug("Subtracting last up-the-ramp frame "
+                                      f"from first in integration {i+1}")
+                            new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
+                                                            ext.data[i, 0, :, :],
+                                                            dtype=(int, int))
 
-                            bias_level = np.median(np.concatenate([arrs, arrp]))
-                            log.debug(f"Subtracting overscan of {int(bias_level)}"
-                                      f" from quadrant {j} of integration {i+1}")
-                            ext.data[i, :, sec_s.y1:sec_s.y2,
-                                           sec_p.x1:sec_p.x2] -= int(bias_level)
+                    if 'CCD' in ad.tags:
+                        # Squeeze the data to remove the empty UTR axis
+                        ext.operate(np.squeeze)
+                        new_data = ext.data
 
-                    new_data = ext.data
+                if len(ext.data.shape) == 3:
+                    # data shape is (integrations, y, x)
+                    # Split up frames along the integrations axis into extensions
+                    for i in range(new_data.shape[0]):
+                        new_ad.append(ext)
+                        new_ad[-1].data = new_data[i, :, :]
 
-                # Split up frames along the integrations axis into extensions
-                for i in range(new_data.shape[0]):
+                if len(ext.data.shape) == 2:
+                    # Data have been processed to 2D images per extension
                     new_ad.append(ext)
-                    new_ad[-1].data = new_data[i, :, :]
 
-            adoutputs.append(new_ad)
+            display_ads.append(new_ad)
 
-        super().display(adinputs=adoutputs, **params)
+        for ad in display_ads:
+            if 'CCD' in ad.tags:
+                for ext in ad:
+                    # Check if already overscan corrected, and continue if so
+                    if (ad.phu.get('BIASIM') or ad.phu.get('DARKIM') or
+                        ad.phu.get(self.timestamp_keys["subtractOverscan"])):
+                        log.fullinfo("Bias level has already been removed from "
+                                     "data; no approximate correction will be "
+                                     "performed")
+                        continue
+
+                    # Handle each of the four quadrants making up the array;
+                    # they each have strips along their two outside edges
+                    # for the overscan correction.
+                    for j in range(4):
+                        overscans = ext.overscan_section()
+                        sec_s = overscans['serial'][j]
+                        sec_p = overscans['parallel'][j]
+                        arrs = np.ravel(ext.data[sec_s.y1:sec_s.y2,
+                                                 sec_s.x1:sec_s.x2])
+                        arrp = np.ravel(ext.data[sec_p.y1:sec_p.y2,
+                                                 sec_p.x1:sec_p.x2])
+
+                        bias_level = np.median(np.concatenate([arrs, arrp]))
+                        log.debug(f"Subtracting overscan of {int(bias_level)}"
+                                  f" from quadrant {j+1} of ext {ext.id}")
+                        ext.data[sec_s.y1:sec_s.y2,
+                                 sec_p.x1:sec_p.x2] -= int(bias_level)
+
+        super().display(adinputs=display_ads, **params)
 
         return adinputs
 
