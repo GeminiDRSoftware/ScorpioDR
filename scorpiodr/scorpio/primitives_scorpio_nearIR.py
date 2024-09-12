@@ -179,11 +179,13 @@ class ScorpioNearIR(Scorpio, NearIR):
                     gdq_sect = ext.mask[intn]
                     readnoise_sect = gt.array_from_descriptor_value(ext, 'read_noise')[0][0]
                     gain_sect = gt.array_from_descriptor_value(ext, 'gain')[0][0]
-                    frame_time = 0.38 #ext.hdr['INTTIME']
+                    # todo: KL: why is this hardcoded?
+                    # From the simulator files, this is the frame_time
+                    # INTTOTT - INTTIME (seconds) could be use.  It's the readout time.
+                    frame_time = 0.38
                     group_time = frame_time * (ext.hdr['UTRFRAME'] + ext.hdr['UTRSKIP'])
                     nframes = ext.hdr['UTRFRAME']
                     max_num_cr = self._get_max_num_cr(gdq_sect, DQ.cosmic_ray)
-
                     data = deepcopy(ext.data[intn])
 
                     # These will be updated in the loop.
