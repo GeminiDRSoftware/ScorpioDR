@@ -96,21 +96,26 @@ class Scorpio(Gemini):
 
         display_ads = []
         for ad in adinputs:
-            # Simulated data uses unsigned ints, which can underflow. Recast.
+            # Create a new astrodata object to hold any modified data that
+            # might be needed, depending on the processing level
+            new_ad = astrodata.create(ad.phu)
+            new_ad.filename = ad.filename
+
             for ext in ad:
+                # Simulated data uses unsigned ints, which can underflow. Recast
+                # to int for safety.
                 if ext.data.dtype.kind == 'u':  # any unsigned integer
                     ext.data = ext.data.astype(dtype=int, casting='same_kind',
                                                copy=False)
 
-                # Create a new astrodata object to hold any modified data that
-                # might be needed, depending on the processing level
-                new_ad = astrodata.create(ad.phu)
-                new_ad.filename = ad.filename
-
                 # Start by checking the shape of the data to see how raw/processed
                 # it is, which determines what we need to do to it.
                 if len(ext.data.shape) == 4:
-                    # data shape is (integrations, up-the-ramp, y, x)
+                    # Data shape is (integrations, up-the-ramp, y, x)
+                    if 'CCD' in ad.tags:
+                        # Squeeze the data to remove the empty UTR axis
+                        ext.operate(np.squeeze)
+
                     if 'NIR' in ad.tags:
                         # Create a new data structure to hold the data in,
                         # minus the up-the-ramp axis which goes away.
@@ -126,25 +131,20 @@ class Scorpio(Gemini):
                             new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
                                                             ext.data[i, 0, :, :],
                                                             dtype=(int, int))
-
-                    if 'CCD' in ad.tags:
-                        # Squeeze the data to remove the empty UTR axis
-                        ext.operate(np.squeeze)
-                        new_data = ext.data
+                        ext.data = new_data
 
                 if len(ext.data.shape) == 3:
-                    # data shape is (integrations, y, x)
+                    # Data shape is (integrations, y, x)
                     # Split up frames along the integrations axis into extensions
-                    for i in range(new_data.shape[0]):
+                    for i in range(ext.data.shape[0]):
                         new_ad.append(ext)
-                        new_ad[-1].data = new_data[i, :, :]
+                        new_ad[-1].data = ext.data[i, :, :]
 
                 if len(ext.data.shape) == 2:
                     # Data have been processed to 2D images per extension
                     new_ad.append(ext)
 
-            display_ads.append(new_ad)
-
+        display_ads.append(new_ad)
         for ad in display_ads:
             if 'CCD' in ad.tags:
                 for ext in ad:
