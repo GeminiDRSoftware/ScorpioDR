@@ -159,20 +159,22 @@ class Scorpio(Gemini):
                     # Handle each of the four quadrants making up the array;
                     # they each have strips along their two outside edges
                     # for the overscan correction.
+                    overscans = ext.overscan_section()
                     for j in range(4):
-                        overscans = ext.overscan_section()
                         sec_s = overscans['serial'][j]
                         sec_p = overscans['parallel'][j]
                         arrs = np.ravel(ext.data[sec_s.y1:sec_s.y2,
                                                  sec_s.x1:sec_s.x2])
                         arrp = np.ravel(ext.data[sec_p.y1:sec_p.y2,
                                                  sec_p.x1:sec_p.x2])
-
-                        bias_level = np.median(np.concatenate([arrs, arrp]))
+                        bias_level = int(np.median(np.concatenate([arrs, arrp])))
                         log.debug(f"Subtracting overscan of {int(bias_level)}"
                                   f" from quadrant {j+1} of ext {ext.id}")
-                        ext.data[sec_s.y1:sec_s.y2,
-                                 sec_p.x1:sec_p.x2] -= int(bias_level)
+                        # Collect limits from the overscan sections, then
+                        # take the extrema to get the region to subtract from.
+                        ys = {y for sec in [sec_s, sec_p] for y in sec[2:]}
+                        xs = {x for sec in [sec_s, sec_p] for x in sec[:2]}
+                        ext.data[min(ys):max(ys), min(xs):max(xs)] -= bias_level
 
         super().display(adinputs=display_ads, **params)
 
