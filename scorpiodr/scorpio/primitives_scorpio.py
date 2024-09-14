@@ -29,8 +29,9 @@ class Scorpio(Gemini):
 
     tagset = set()  # Cannot be assigned as a class
 
-    def __init__(self, adinputs, **kwargs):
-        super(Scorpio, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(Scorpio, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.keyword_comments['DATSEC'] = self.keyword_comments['DATASEC']
         self._param_update(parameters_scorpio)
         # Add Scorpio-specific timestamp keywords

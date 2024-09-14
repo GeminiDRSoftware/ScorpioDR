@@ -21,8 +21,9 @@ class ScorpioBundle(Scorpio):
     """
     tagset = set(["GEMINI", "SCORPIO", "BUNDLE"])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioBundle, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioBundle, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self._param_update(parameters_scorpio_bundle)
 
     @staticmethod

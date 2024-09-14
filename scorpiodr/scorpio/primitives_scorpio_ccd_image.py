@@ -21,7 +21,8 @@ class ScorpioCCDImage(ScorpioCCD, Image, Photometry):
 
     tagset = set(['GEMINI', 'SCORPIO', 'IMAGE', 'CCD'])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioCCDImage, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioCCDImage, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_ccd_image)

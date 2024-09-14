@@ -27,8 +27,9 @@ class ScorpioCCD(Scorpio, CCD):
 
     tagset = set(['GEMINI', 'SCORPIO', 'CCD'])
 
-    def __init__(self, adinputs, **kwargs):
-        super(ScorpioCCD, self).__init__(adinputs, **kwargs)
+    def _initialize(self, adinputs, **kwargs):
+        #super(ScorpioCCD, self).__init__(adinputs, **kwargs)
+        super()._initialize(adinputs, **kwargs)
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_ccd)
 
@@ -95,6 +96,7 @@ class ScorpioCCD(Scorpio, CCD):
         timestamp_key = self.timestamp_keys[self.myself()]
 
         for ad in adinputs:
+            datasec_kw = ad._keyword_for('data_section')
             if "CAL" in ad.tags:
                 ad = super().trimOverscan([ad], suffix=suffix)[0]
                 for ext in ad:
@@ -102,6 +104,9 @@ class ScorpioCCD(Scorpio, CCD):
                         del ext.hdr['OVRSECS*']
                         del ext.hdr['OVRSECP*']
             else:
+                # KL: this is not taking into account the OBJMASK
+                # (which core trimOverscan handles)  Matters for QAP if IQ measured
+                # before overscan correction.
                 for ext in ad:
                     nints = ext.data.shape[0]
                     data_list = []
@@ -109,16 +114,26 @@ class ScorpioCCD(Scorpio, CCD):
                     variance_list = []
                     for i in range(nints):
                         temp_ad = astrodata.create(ad.phu)
-                        temp_ad.append(ext.nddata[i], header=deepcopy(ext.hdr))
+                        # KL: deepcopy of ext.nddata needed, otherwise datasec reset in
+                        # super trim and following integrations use that new trimmed
+                        # section instead of the original untrimmed.
+                        temp_ad.append(deepcopy(ext.nddata[i]), header=deepcopy(ext.hdr))
                         os_trimmed = super().trimOverscan(adinputs=[temp_ad], suffix=suffix)
                         data_list.append(os_trimmed[0][0].data)
                         mask_list.append(os_trimmed[0][0].mask)
                         variance_list.append(os_trimmed[0][0].variance)
+                        if i == 0:
+                            datsec = os_trimmed[0].hdr.get(datasec_kw)[0]
                     ext.reset(np.array(data_list), mask=np.array(mask_list), variance=np.array(variance_list))
 
                     with suppress(AttributeError, KeyError):
                         del ext.hdr['OVRSECS*']
                         del ext.hdr['OVRSECP*']
+                        # need to adjust DATSEC*  or deleted them.
+                        del ext.hdr[datasec_kw+'*']
+
+                    ext.hdr.set(datasec_kw, datsec, comment=self.keyword_comments.get(datasec_kw))
+                    ext.hdr.set('TRIMSEC', datsec, comment=self.keyword_comments.get('TRIMSEC'))
 
                 ad.phu.set('TRIMMED', 'yes', self.keyword_comments['TRIMMED'])
                 gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
