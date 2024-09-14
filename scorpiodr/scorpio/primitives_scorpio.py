@@ -104,6 +104,7 @@ class Scorpio(Gemini):
             return
 
         remove_bias = params['remove_bias']
+        integ_num = params['integration']
 
         display_ads = []
         for ad in adinputs:
@@ -147,15 +148,28 @@ class Scorpio(Gemini):
                 if len(ext.data.shape) == 3:
                     # Data shape is (integrations, y, x)
                     # Split up frames along the integrations axis into extensions
+                    if integ_num > ext.data.shape[0]:
+                        raise ValueError(f"Only {ext.data.shape[0]} integrations "
+                                         f"in file {ad.filename}, attempted to "
+                                         f"display integration #{integ_num}.")
                     for i in range(ext.data.shape[0]):
-                        new_ad.append(ext)
-                        new_ad[-1].data = ext.data[i, :, :]
+                        if integ_num is None or integ_num == i+1:
+                            log.fullinfo(f"Displaying integration {integ_num}")
+                            new_ad.append(ext)
+                            new_ad[-1].data = ext.data[i, :, :]
+
 
                 if len(ext.data.shape) == 2:
                     # Data have been processed to 2D images per extension
-                    new_ad.append(ext)
+                    if integ_num > len(ad):
+                        raise ValueError(f"Only {len(ad)} integrations "
+                                         f"in file {ad.filename}, attempted to "
+                                         f"display integration #{integ_num}.")
+                    if integ_num is None or integ_num == ext.id:
+                        new_ad.append(ext)
 
         display_ads.append(new_ad)
+
         for ad in display_ads:
             if 'CCD' in ad.tags and remove_bias:
                 for ext in ad:
@@ -186,6 +200,7 @@ class Scorpio(Gemini):
                         ys = {y for sec in [sec_s, sec_p] for y in sec[2:]}
                         xs = {x for sec in [sec_s, sec_p] for x in sec[:2]}
                         ext.data[min(ys):max(ys), min(xs):max(xs)] -= bias_level
+
 
         super().display(adinputs=display_ads, **params)
 

@@ -11,6 +11,8 @@ class stackIntegrationsConfig(config.Config):
 class displayConfig(parameters_visualize.displayConfig):
     remove_bias = config.Field("Remove estimated bias level before displaying?",
                                bool, True)
+    integration = config.RangeField("Integration to display (1-indexed)", int,
+                                    min=1, default=None, optional=True)
 
     def setDefaults(self):
         self.tile = False
