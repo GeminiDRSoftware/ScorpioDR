@@ -148,7 +148,7 @@ class Scorpio(Gemini):
                 if len(ext.data.shape) == 3:
                     # Data shape is (integrations, y, x)
                     # Split up frames along the integrations axis into extensions
-                    if integ_num > ext.data.shape[0]:
+                    if integ_num and integ_num > ext.data.shape[0]:
                         raise ValueError(f"Only {ext.data.shape[0]} integrations "
                                          f"in file {ad.filename}, attempted to "
                                          f"display integration #{integ_num}.")
@@ -161,7 +161,7 @@ class Scorpio(Gemini):
 
                 if len(ext.data.shape) == 2:
                     # Data have been processed to 2D images per extension
-                    if integ_num > len(ad):
+                    if integ_num and integ_num > len(ad):
                         raise ValueError(f"Only {len(ad)} integrations "
                                          f"in file {ad.filename}, attempted to "
                                          f"display integration #{integ_num}.")
