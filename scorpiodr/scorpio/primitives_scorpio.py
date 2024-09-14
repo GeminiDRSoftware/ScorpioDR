@@ -80,14 +80,18 @@ class Scorpio(Gemini):
         there are multiple extensions or integrations. Saturated pixels can be
         displayed in red, and overlays can also be shown.
 
-        SCORPIO data is 4D (the axes are [integrations, up-the-ramp, y, x]), so
-        it needs to be reduced to 2D frames in their own extensions before passing
-        it up to the DRAGONS `display` primitive for display. Each type of data
-        (visible, IR) has its own complication to handle: the visible data needs
-        to have the overscan subtracted for each quadrant, while the IR data has
-        multiple up-the-ramp frames that need handling in order to display it.
+        SCORPIO raw data is 4D (the axes are [integrations, up-the-ramp, y, x]),
+        so it needs to be reduced to 2D frames in their own extensions before
+        passing it up to the DRAGONS `display` primitive for display. Each type
+        of data (visible, IR) has its own complication to handle: the visible
+        data needs to have the overscan subtracted for each quadrant, while the
+        IR data has multiple up-the-ramp frames that need handling in order to
+        display it.
+
         Parameters
         ----------
+        ignore: bool
+            setting to True turns off the display
         remove_bias: bool
             attempt to subtract bias before displaying?
         """
