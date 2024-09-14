@@ -9,5 +9,8 @@ class stackIntegrationsConfig(config.Config):
 
 
 class displayConfig(parameters_visualize.displayConfig):
+    remove_bias = config.Field("Remove estimated bias level before displaying?",
+                               bool, True)
+
     def setDefaults(self):
         self.tile = False

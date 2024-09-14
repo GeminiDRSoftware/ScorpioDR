@@ -86,6 +86,10 @@ class Scorpio(Gemini):
         (visible, IR) has its own complication to handle: the visible data needs
         to have the overscan subtracted for each quadrant, while the IR data has
         multiple up-the-ramp frames that need handling in order to display it.
+        Parameters
+        ----------
+        remove_bias: bool
+            attempt to subtract bias before displaying?
         """
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
@@ -94,6 +98,8 @@ class Scorpio(Gemini):
         if params["ignore"]:
             log.warning("display turned off per user request")
             return
+
+        remove_bias = params['remove_bias']
 
         display_ads = []
         for ad in adinputs:
@@ -147,7 +153,7 @@ class Scorpio(Gemini):
 
         display_ads.append(new_ad)
         for ad in display_ads:
-            if 'CCD' in ad.tags:
+            if 'CCD' in ad.tags and remove_bias:
                 for ext in ad:
                     # Check if already overscan corrected, and continue if so
                     if (ad.phu.get('BIASIM') or ad.phu.get('DARKIM') or
