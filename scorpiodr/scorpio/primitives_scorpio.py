@@ -134,15 +134,14 @@ class Scorpio(Gemini):
                         new_data = np.empty([ext.data.shape[0],
                                              ext.data.shape[2],
                                              ext.data.shape[3]],
-                                            dtype=int)
+                                            dtype=np.float32)
                         for i in range(ext.data.shape[0]):
                             # Perform a quick-'n'-dirty 'last minus first'
                             # subtraction of the up-the-ramp axis
                             log.debug("Subtracting last up-the-ramp frame "
                                       f"from first in integration {i+1}")
                             new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
-                                                            ext.data[i, 0, :, :],
-                                                            dtype=(int, int))
+                                                            ext.data[i, 0, :, :])
                         ext.data = new_data
 
                 if len(ext.data.shape) == 3:
