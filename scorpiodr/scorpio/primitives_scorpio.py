@@ -121,7 +121,9 @@ class Scorpio(Gemini):
                                                copy=False)
 
                 # Start by checking the shape of the data to see how raw/processed
-                # it is, which determines what we need to do to it.
+                # it is, which determines what we need to do to it. Generally,
+                # we need to reduce the dimensionality by 1, then recheck the
+                # shape of the data.
                 if len(ext.data.shape) == 4:
                     # Data shape is (integrations, up-the-ramp, y, x)
                     if 'CCD' in ad.tags:
@@ -129,20 +131,10 @@ class Scorpio(Gemini):
                         ext.operate(np.squeeze)
 
                     if 'NIR' in ad.tags:
-                        # Create a new data structure to hold the data in,
-                        # minus the up-the-ramp axis which goes away.
-                        new_data = np.empty([ext.data.shape[0],
-                                             ext.data.shape[2],
-                                             ext.data.shape[3]],
-                                            dtype=np.float32)
-                        for i in range(ext.data.shape[0]):
-                            # Perform a quick-'n'-dirty 'last minus first'
-                            # subtraction of the up-the-ramp axis
-                            log.debug("Subtracting last up-the-ramp frame "
-                                      f"from first in integration {i+1}")
-                            new_data[i, :, :] = np.subtract(ext.data[i, -1, :, :],
-                                                            ext.data[i, 0, :, :])
-                        ext.data = new_data
+                        # Do a last-minus-first subtraction, which removes the
+                        # UTR axis
+                        ext.data = np.subtract(ext.data[:, -1, :, :],
+                                               ext.data[:, 0, :, :])
 
                 if len(ext.data.shape) == 3:
                     # Data shape is (integrations, y, x)
@@ -153,7 +145,6 @@ class Scorpio(Gemini):
                                          f"display integration #{integ_num}.")
                     for i in range(ext.data.shape[0]):
                         if integ_num is None or integ_num == i+1:
-                            log.fullinfo(f"Displaying integration {integ_num}")
                             new_ad.append(ext)
                             new_ad[-1].data = ext.data[i, :, :]
 
