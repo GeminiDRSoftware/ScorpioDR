@@ -135,6 +135,10 @@ class Scorpio(Gemini):
                         # UTR axis
                         ext.data = np.subtract(ext.data[:, -1, :, :],
                                                ext.data[:, 0, :, :])
+                        if ext.mask is not None:
+                            # Take the bitwise OR of DQ planes, if they exist.
+                            ext.mask = np.bitwise_or(ext.mask[:, -1, :, :],
+                                                     ext.mask[:, 0, :, :])
 
                 if len(ext.data.shape) == 3:
                     # Data shape is (integrations, y, x)
@@ -147,6 +151,8 @@ class Scorpio(Gemini):
                         if integ_num is None or integ_num == i+1:
                             new_ad.append(ext)
                             new_ad[-1].data = ext.data[i, :, :]
+                            if ext.mask is not None:
+                                new_ad[-1].mask = ext.mask[i, :, :]
 
 
                 if len(ext.data.shape) == 2:
