@@ -171,6 +171,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 new_ext_data = np.empty((ints, rows, cols), dtype=ext.data.dtype)
                 new_ext_mask = np.empty((ints, rows, cols), dtype=ext.mask.dtype)
                 new_ext_variance = np.empty((ints, rows, cols), dtype=ext.variance.dtype)
+
                 new_ad.append(new_ext_data, header=ext.hdr)
 
                 for intn in range(len(ext.data)):
@@ -264,8 +265,12 @@ class ScorpioNearIR(Scorpio, NearIR):
                         log.error("CAL integration axis dimension exceeds 1")
                         raise ValueError("CAL integration axis dimension exceeds 1")
                     new_ad[e].reset(new_ext_data[0], mask=new_ext_mask[0], variance=new_ext_variance[0])
+                    new_ad[e].wcs = ext.nddata.window[0, 0].wcs
                 else:
                     new_ad[e].reset(new_ext_data, mask=new_ext_mask, variance=new_ext_variance)
+                    new_ad[e].wcs = ext.nddata.window[:, 0].wcs
+
+                astrodata.wcs.remove_unused_world_axis(new_ad[e])
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
