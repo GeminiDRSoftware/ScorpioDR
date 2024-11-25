@@ -6,6 +6,7 @@
 
 import astrodata
 import numpy as np
+
 from geminidr.gemini.primitives_gemini import Gemini
 from gempy.gemini import gemini_tools as gt
 
@@ -132,6 +133,7 @@ class Scorpio(Gemini):
                     int_list.append(temp_ad)
                 flattened = self.stackFrames(int_list, **params)
                 ext.reset(flattened[0][0].nddata)
+                astrodata.wcs.remove_unused_world_axis(ext)
 
             ad.update_filename(suffix=sfx, strip=True)
 
@@ -197,27 +199,26 @@ class Scorpio(Gemini):
         """
         adinputs = super().standardizeStructure(adinputs, **params)
 
-        adoutputs = []
         for ad in adinputs:
             if "CCD" in ad.tags:     # VIS
-                new_ad = astrodata.create(ad.phu)
                 for ext in ad:
-                    nints = ext.data.shape[0]
                     if "CAL" in ad.tags:
                         # Remove the group axis and integrations axis
                         # For CALs, there's only 1 integration per exposure and we need a stackable 2-D image
-                        new_ad.append(ext.data[0, 0], header=ext.hdr)
+                        ext.reset(ext.nddata[0, 0])
+                        # Do we need to do something with the CAL WCS here?
+                        # remove_unused_world_axis() only works for 1 axis
                     else:
                         # Skip the dark frames preceding light frames in science frames in continuous window imaging.
                         if "IMAGE" in ad.tags and ad.phu["WMODE"].upper() == "CONTINUOUS":
-                            new_ad.append([ext.data[nint, 0] for nint in range(ext.hdr["WNFDARK"], nints)], header=ext.hdr)
+                            ndarkf = ext.hdr.get["WNFDARK"]  # check validity?
+                            ext.reset(ext.nddata[ndarkf:, 0])
                         else:   # full frame imaging, burst window imaging, or spectroscopy
-                            new_ad.append([ext.data[nint, 0] for nint in range(nints)], header=ext.hdr)
-                new_ad.filename = ad.filename
-                adoutputs.append(new_ad)
+                            ext.reset(ext.nddata[:, 0])
+                        astrodata.wcs.remove_unused_world_axis(ext)
             else:   # NIR
-                adoutputs.append(ad)
-        return adoutputs
+                pass
+        return adinputs
 
     def standardizeWCS(self, adinputs=None, **params):
         return adinputs
