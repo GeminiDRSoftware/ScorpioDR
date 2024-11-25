@@ -24,5 +24,5 @@ def pointing_in_field(ad, refpos, frac_FOV=1.0, frac_slit=1.0):
 
     #dist = frac_FOV * 1024 # pixels
 
-    return all(abs(x-r) < frac_FOV * ad[0].shape[0] 
+    return all(abs(x-r) < frac_FOV * ad[0].shape[-1]
                for x, r in zip(position, refpos))
