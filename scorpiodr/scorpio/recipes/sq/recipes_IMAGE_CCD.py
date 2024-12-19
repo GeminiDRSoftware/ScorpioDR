@@ -26,6 +26,7 @@ def reduce(p):
     p.darkCorrect()   # TBD if truly needed
     p.flatCorrect()
     #p.fringeCorrect()
+    p.stackIntegrations()
     p.detectSources()
     p.adjustWCSToReference()
     p.resampleToCommonFrame()
