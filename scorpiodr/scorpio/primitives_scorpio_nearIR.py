@@ -13,6 +13,7 @@ from .primitives_scorpio import Scorpio
 from . import parameters_scorpio_nearIR
 
 from recipe_system.utils.decorators import parameter_override
+from recipe_system.utils.decorators import capture_provenance
 
 import numpy as np
 import numpy.linalg as la
@@ -21,6 +22,7 @@ from copy import deepcopy
 # ------------------------------------------------------------------------------
 
 @parameter_override
+@capture_provenance
 class ScorpioNearIR(Scorpio, NearIR):
     """
     This class contains primitives that applies to all Scorpio near-IR data.
