@@ -3,12 +3,19 @@
 
 from gempy.library import config
 from geminidr.gemini import parameters_gemini
+from geminidr.core import parameters_preprocess
+
+class associateSkyConfig(parameters_preprocess.associateSkyConfig):
+    pass
 
 class calculateSignalByRegressionConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_slopeDetermined", optional=True)
 
 class flagCosmicRaysFromNDRsConfig(config.Config):
     suffix = config.Field("Filename suffix", str, "_CRsFlagged", optional=True)
+
+class skyCorrectConfig(parameters_preprocess.skyCorrectConfig):
+    pass
 
 class standardizeStructureConfig(parameters_gemini.standardizeStructureConfig):
     def setDefaults(self):
