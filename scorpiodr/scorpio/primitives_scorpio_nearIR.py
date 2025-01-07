@@ -20,6 +20,7 @@ import numpy.linalg as la
 import os
 import sys
 from copy import deepcopy
+from datetime import timedelta
 from astropy.table import Table
 # ------------------------------------------------------------------------------
 
@@ -1946,13 +1947,22 @@ class ScorpioNearIR(Scorpio, NearIR):
             split_ads = n_ints * [None]
 
             for n_ext, ext in enumerate(ad):
+
+                dt = ad.ut_datetime()  # start of first integration
+                tdelt = timedelta(seconds=ext.hdr.get('INTTOTT') or 0.)
                 ndd = ext.nddata if len(ext.shape) > 2 else [ext.nddata]
+
                 for n_int, plane in enumerate(ndd):
                     if n_ext == 0:
                         new_ad = split_ads[n_int] = astrodata.create(ad.phu)
                         new_ad.filename = self._modify_filename_components(
                             ad.filename, n_int=n_int
                         )
+                        # Could also update MJD-OBS & EXPSTART here, but that
+                        # would require AstroPy instead of plain datetime and
+                        # currently isn't necessary:
+                        new_ad.phu['DATE-OBS'] = dt.date().isoformat()
+                        new_ad.phu['TIME-OBS'] = dt.time().isoformat()
                         ## This probably isn't needed, since input HISTORY gets
                         ## updated at the end by the decorator irrespective.
                         # for attr in ad.tables:
@@ -1972,6 +1982,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                         adoutputs.append(new_ad)
                         mapping[new_ad.filename] = (ad, n_int)
                     split_ads[n_int].append(plane, header=ext.hdr)
+                    dt += tdelt
 
         return adoutputs, mapping
 
