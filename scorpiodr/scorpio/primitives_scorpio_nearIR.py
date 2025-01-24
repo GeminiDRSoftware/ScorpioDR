@@ -308,8 +308,16 @@ class ScorpioNearIR(Scorpio, NearIR):
                     new_ext_mask[intn] = pixel_dq
                     new_ext_variance[intn] = np.sqrt(slope_var_sect)
 
-                # Remove the extra integration axis for CAL images. Eventually this should be
-                # moved elsewhere in ScorpioDR.
+                # Both science data & cals now need the NDR group axis removing
+                # and the function below can only remove one World axis at a
+                # time, so do that one first for cals:
+                new_ad[e].reset(new_ext_data, mask=new_ext_mask,
+                                variance=new_ext_variance)
+                new_ad[e].wcs = ext.nddata.window[:, 0].wcs
+                astrodata.wcs.remove_unused_world_axis(new_ad[e])
+
+                # Remove the extra integration axis for CAL images.
+                # Eventually this should be moved elsewhere in ScorpioDR.
                 # Return a 2D array per extension for CAL images.
                 # Otherwise return a 3D array for SCI images.
                 if "CAL" in ad.tags:
@@ -320,13 +328,8 @@ class ScorpioNearIR(Scorpio, NearIR):
                     except AssertionError:
                         log.error("CAL integration axis dimension exceeds 1")
                         raise ValueError("CAL integration axis dimension exceeds 1")
-                    new_ad[e].reset(new_ext_data[0], mask=new_ext_mask[0], variance=new_ext_variance[0])
-                    new_ad[e].wcs = ext.nddata.window[0, 0].wcs
-                else:
-                    new_ad[e].reset(new_ext_data, mask=new_ext_mask, variance=new_ext_variance)
-                    new_ad[e].wcs = ext.nddata.window[:, 0].wcs
-
-                astrodata.wcs.remove_unused_world_axis(new_ad[e])
+                    new_ad[e].reset(new_ad[e].nddata[0])
+                    astrodata.wcs.remove_unused_world_axis(new_ad[e])
 
             # Update the filename.
             ad.update_filename(suffix=sfx, strip=True)
