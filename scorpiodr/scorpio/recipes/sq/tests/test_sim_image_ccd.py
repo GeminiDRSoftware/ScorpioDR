@@ -54,6 +54,7 @@ datasets = {
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240917-080911.fits" :
                 drive_url + "&id=1AiNhzVYGbp3fcw064t09b3HEjCIOleGt"},
         "ucals": [],
+        "refs" : ["SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030_stack.fits"],
     },
 
 }
@@ -113,10 +114,10 @@ def test_reduce_image(change_working_dir, keep_data, test_case, path_to_refs):
                 [os.remove(f) for f in glob.glob("*_align.fits")]
 
         # Comparison of final output:
-        for f in ['SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030_stack.fits']:
+        for f in datasets[test_case]["refs"]:
             adout = adopen(f)
             adref = adopen(os.path.join(path_to_refs, f))
-            assert ad_compare(adref, adout, atol=1e-4)
+            assert ad_compare(adout, adref, atol=1e-4)
 
 
 if __name__ == '__main__':
