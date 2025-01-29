@@ -59,7 +59,7 @@ datasets = {
 
 }
 
-@pytest.mark.scorpioim
+@pytest.mark.scorpioimage
 @pytest.mark.integration_test
 @pytest.mark.dragons_remote_data
 @pytest.mark.parametrize("test_case", list(datasets.keys())[:1])
