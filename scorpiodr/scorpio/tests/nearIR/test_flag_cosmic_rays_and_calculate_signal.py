@@ -41,6 +41,8 @@ def test_regression_in_flag_cosmic_rays_and_calculate_signal(
 
     ref_ad = ref_ad_factory(out_ad.filename)
 
+    assert len(out_ad) == len(ref_ad)
+
     for out_ext, ref_ext in zip(out_ad, ref_ad):
         np.testing.assert_allclose(out_ext.data, ref_ext.data, atol=1e-4)
         np.testing.assert_equal(out_ext.mask & DQ.cosmic_ray,
