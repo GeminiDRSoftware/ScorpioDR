@@ -3,14 +3,12 @@
 #
 #                                            primitives_scorpio_spect_nearIR.py
 # ------------------------------------------------------------------------------
-
-from gempy.gemini import gemini_tools as gt
-
 from geminidr.core import Spect
+from gempy.gemini import gemini_tools as gt
+from recipe_system.utils.decorators import parameter_override
+
 from .primitives_scorpio_nearIR import ScorpioNearIR
 from . import parameters_scorpio_nearIR_spect
-
-from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override

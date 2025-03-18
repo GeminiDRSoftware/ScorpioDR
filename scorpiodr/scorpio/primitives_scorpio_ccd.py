@@ -4,18 +4,17 @@
 #                                               primitives_scorpio_image_ccd.py
 # ------------------------------------------------------------------------------
 from contextlib import suppress
-
-from gempy.gemini import gemini_tools as gt
-
-from geminidr.core import CCD
-from .primitives_scorpio import Scorpio
-from . import parameters_scorpio_ccd
 from copy import deepcopy
 
-import astrodata
 import numpy as np
 
+import astrodata
+from geminidr.core import CCD
+from gempy.gemini import gemini_tools as gt
 from recipe_system.utils.decorators import parameter_override
+
+from .primitives_scorpio import Scorpio
+from . import parameters_scorpio_ccd
 # ------------------------------------------------------------------------------
 
 @parameter_override

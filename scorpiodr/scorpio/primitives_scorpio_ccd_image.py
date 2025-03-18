@@ -3,13 +3,11 @@
 #
 #                                               primitives_scorpio_image_ccd.py
 # ------------------------------------------------------------------------------
-
-
 from geminidr.core import Image, Photometry
+from recipe_system.utils.decorators import parameter_override
+
 from .primitives_scorpio_ccd import ScorpioCCD
 from . import parameters_scorpio_ccd_image
-
-from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override

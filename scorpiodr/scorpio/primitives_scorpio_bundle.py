@@ -3,14 +3,14 @@
 #
 #                                                  primitives_scorpio_bundle.py
 # ------------------------------------------------------------------------------
-from .primitives_scorpio import Scorpio
-from . import parameters_scorpio_bundle
+import copy
 
+import astrodata
 from gempy.gemini import gemini_tools as gt
 from recipe_system.utils.decorators import parameter_override
 
-import astrodata
-import copy
+from .primitives_scorpio import Scorpio
+from . import parameters_scorpio_bundle
 # ------------------------------------------------------------------------------
 
 @parameter_override

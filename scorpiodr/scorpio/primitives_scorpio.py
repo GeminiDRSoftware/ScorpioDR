@@ -3,18 +3,15 @@
 #
 #                                                         primitives_scorpio.py
 # ------------------------------------------------------------------------------
-
-import astrodata
 import numpy as np
 
+import astrodata
 from geminidr.gemini.primitives_gemini import Gemini
 from gempy.gemini import gemini_tools as gt
+from recipe_system.utils.decorators import parameter_override
 
 from . import parameters_scorpio
-
 from .lookups import timestamp_keywords as scorpio_stamps
-
-from recipe_system.utils.decorators import parameter_override
 # ------------------------------------------------------------------------------
 
 @parameter_override

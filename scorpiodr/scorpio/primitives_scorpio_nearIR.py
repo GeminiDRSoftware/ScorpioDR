@@ -3,25 +3,25 @@
 #
 #                                            primitives_scorpio_spect_nearIR.py
 # ------------------------------------------------------------------------------
-
-import astrodata
-from geminidr.gemini.lookups import DQ_definitions as DQ
-from gempy.gemini import gemini_tools as gt
-
-from geminidr.core import NearIR
-from .primitives_scorpio import Scorpio
-from . import parameters_scorpio_nearIR
-
-from recipe_system.utils.decorators import parameter_override
-from recipe_system.utils.decorators import capture_provenance
-
-import numpy as np
-import numpy.linalg as la
 import os
 import sys
 from copy import deepcopy
 from datetime import timedelta
+
+import numpy as np
+import numpy.linalg as la
+
 from astropy.table import Table
+
+import astrodata
+from geminidr.core import NearIR
+from geminidr.gemini.lookups import DQ_definitions as DQ
+from gempy.gemini import gemini_tools as gt
+from recipe_system.utils.decorators import capture_provenance
+from recipe_system.utils.decorators import parameter_override
+
+from .primitives_scorpio import Scorpio
+from . import parameters_scorpio_nearIR
 # ------------------------------------------------------------------------------
 
 @parameter_override

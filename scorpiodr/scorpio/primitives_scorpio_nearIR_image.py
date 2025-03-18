@@ -3,16 +3,14 @@
 #
 #                                            primitives_scorpio_image_nearIR.py
 # ------------------------------------------------------------------------------
-
-from gempy.gemini import gemini_tools as gt
+import numpy as np
 
 from geminidr.core import Image, Photometry
-from .primitives_scorpio_nearIR import ScorpioNearIR
-from . import parameters_scorpio_nearIR_image
-
+from gempy.gemini import gemini_tools as gt
 from recipe_system.utils.decorators import parameter_override
 
-import numpy as np
+from .primitives_scorpio_nearIR import ScorpioNearIR
+from . import parameters_scorpio_nearIR_image
 # ------------------------------------------------------------------------------
 
 @parameter_override
