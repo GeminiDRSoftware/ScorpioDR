@@ -22,7 +22,7 @@ def reduce(p):
     p.addVAR(read_noise=True, poisson_noise=True)
     p.nonlinearityCorrect()
     p.referencePixelsCorrect()
-    p.flagCosmicRaysFromNDRs()
+    # p.flagCosmicRaysFromNDRs()
     p.calculateSignalByRegression()
 
     p.darkCorrect()

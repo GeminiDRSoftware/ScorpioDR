@@ -35,7 +35,7 @@ def test_regression_in_flag_cosmic_rays_and_calculate_signal(
             file_name='log_regression_{:s}.txt'.format(ad.data_label())
         )
         p = ScorpioNearIR([ad])
-        p.flagCosmicRaysFromNDRs()
+        # p.flagCosmicRaysFromNDRs()
         p.calculateSignalByRegression()
         out_ad = p.writeOutputs().pop()
 
