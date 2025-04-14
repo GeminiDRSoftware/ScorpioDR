@@ -178,7 +178,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                 astrodata.wcs.remove_unused_world_axis(new_ext)
 
                 # Keep stats on goodness of fits for the log:
-                rchisq = np.empty((n_rows, n_cols), dtype=np.float32)
+                chisq = np.empty((n_rows, n_cols), dtype=np.float32)
 
                 for n_int, (integ, new_integ) in enumerate(
                         zip(ext.nddata, new_ext.nddata)
@@ -188,9 +188,12 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                     diff_rates = ((integ.data[1:] - integ.data[:-1]) / tgroup)
 
-                    # Mask diffs that come from saturated values (1 = good),
+                    # Track which diffs are used in the final fit, masking any
+                    # beforehand that come from saturated values (1 = good),
                     # unless all of them are saturated for a given pixel:
-                    if integ.mask is not None:
+                    if integ.mask is None:
+                        diff_mask = np.ones_like(diff_rates, dtype=np.uint8)
+                    else:
                         diff_dq = integ.mask[1:] | integ.mask[:-1]
                         diff_mask = diff_dq & DQ.saturated
                         diff_mask = (
@@ -200,10 +203,8 @@ class ScorpioNearIR(Scorpio, NearIR):
 
                     for nrow in range(n_rows):  # TO DO: transpose arrays?
 
-                        if integ.mask is None:
-                            good_diffs = None  # initially all good
-                        else:
-                            good_diffs = diff_mask[:, nrow]
+                        # This gets modified by reference below:
+                        good_diffs = diff_mask[:, nrow]
 
                         # Initial ramp fitting, allowing for jumps due to
                         # cosmic rays (by comparing the goodness of fit when
@@ -235,12 +236,17 @@ class ScorpioNearIR(Scorpio, NearIR):
                                 axis=0
                             )
 
-                        # Divide output chi^2 by the DOF of each fit:
-                        rchisq[nrow] = result.chisq / (good_diffs.sum(axis=0)-1)
+                        chisq[nrow] = result.chisq
 
+                    # Report chi^2 divided by by the DOF of each fit, ignoring
+                    # any pixels that don't have multiple good diffs:
+                    dof = diff_mask.sum(axis=0) - 1
+                    good_diffs = dof > 0  # (note: briefly re-using variable)
+                    rchisq = chisq[good_diffs] / dof[good_diffs]
                     log.stdinfo(f'  red. chi^2: {rchisq.mean():.2f} +/-'
                                 f' {rchisq.std():.2f} (range'
                                 f' {rchisq.min():.2f}--{rchisq.max():.1f})')
+                    del rchisq
 
                 # For calibrations only, check that the integration axis is
                 # redundant and remove it (as well as the read group axis),
