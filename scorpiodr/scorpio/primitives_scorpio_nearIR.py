@@ -167,7 +167,7 @@ class ScorpioNearIR(Scorpio, NearIR):
                         data = np.empty(outshape, dtype=ext.data.dtype),
                         mask = (None if ext.mask is None else
                                 np.zeros(outshape, dtype=ext.mask.dtype)),
-                        variance = np.empty(outshape, dtype=ext.variance.dtype)
+                        variance = np.zeros(outshape, dtype=ext.variance.dtype)
                     ),
                     header=ext.hdr
                 )
