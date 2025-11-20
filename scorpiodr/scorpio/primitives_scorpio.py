@@ -62,9 +62,12 @@ class Scorpio(Gemini):
                     data_list.append(dark_corrected[0][0].data)
                     mask_list.append(dark_corrected[0][0].mask)
                     variance_list.append(dark_corrected[0][0].variance)
-                ext.reset(np.array(data_list), 
-                                   mask=np.array(mask_list), 
-                                   variance=np.array(variance_list))
+                if dark is not None:
+                    ext.reset(np.array(data_list),
+                                       mask=np.array(mask_list),
+                                       variance=np.array(variance_list))
+            if dark is None:
+                continue
             ad.phu.set('DARKIM', dark.filename, self.keyword_comments['DARKIM'])
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=suffix, strip=True)
@@ -91,9 +94,12 @@ class Scorpio(Gemini):
                     data_list.append(flat_corrected[0][0].data)
                     mask_list.append(flat_corrected[0][0].mask)
                     variance_list.append(flat_corrected[0][0].variance)
-                ext.reset(np.array(data_list), 
-                                   mask=np.array(mask_list), 
-                                   variance=np.array(variance_list))
+                if flat is not None:
+                    ext.reset(np.array(data_list),
+                                       mask=np.array(mask_list),
+                                       variance=np.array(variance_list))
+            if flat is None:
+                continue
             ad.phu.set("FLATIM", flat.filename, self.keyword_comments["FLATIM"])
             gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
             ad.update_filename(suffix=suffix, strip=True)

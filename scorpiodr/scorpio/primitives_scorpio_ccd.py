@@ -56,7 +56,10 @@ class ScorpioCCD(Scorpio, CCD):
                         data_list.append(bias_corrected[0][0].data)
                         mask_list.append(bias_corrected[0][0].mask)
                         variance_list.append(bias_corrected[0][0].variance)
-                    ext.reset(np.array(data_list), mask=np.array(mask_list), variance=np.array(variance_list))
+                    if bias is not None:
+                        ext.reset(np.array(data_list), mask=np.array(mask_list), variance=np.array(variance_list))
+                if bias is None:
+                    continue
                 ad.phu.set('BIASIM', bias.filename, self.keyword_comments['BIASIM'])
                 gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
                 ad.update_filename(suffix=suffix, strip=True)
