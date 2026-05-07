@@ -28,6 +28,7 @@ pipeline {
     environment {
         MPLBACKEND = "agg"
         PATH = "$JENKINS_CONDA_HOME/bin:$PATH"
+        SHARED_TOX_DIR = "${env.WORKSPACE}/tox_shared"
     }
 
     stages {
@@ -49,9 +50,10 @@ pipeline {
                 echo "Update the Conda base install for all on-line nodes"
                 checkout scm
                 sh '.jenkins/scripts/setup_agent.sh'
-                // // This is only needed if we have parallel stages later:
-                // echo "Create a trial Python 3.12 env, to cache new packages"
-                // sh 'tox -e py312-noop -v -r -- --basetemp=${DRAGONS_TEST_OUT} ${TOX_ARGS}'
+                echo "Create a shared Python 3.12 env"
+                sh 'tox -e py312-noop,codecov --workdir "${SHARED_TOX_DIR}" -v -r --notest'
+                echo "Install ScorpioDR checkout to env"
+                sh '"${SHARED_TOX_DIR}/test_env/bin/python" -m pip install . --no-deps --ignore-installed --no-cache-dir -v'
             }
             post {
                 always {
@@ -84,9 +86,9 @@ pipeline {
         //                 checkout scm
         //                 sh '.jenkins/scripts/setup_dirs.sh'
         //                 echo "Running tests with Python 3.12"
-        //                 sh 'tox -e py312-unit -v -r -- --basetemp=${DRAGONS_TEST_OUT} --junit-xml reports/unittests_results.xml ${TOX_ARGS}'
+        //                 sh 'tox -e py312-unit --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -v -- --basetemp="${DRAGONS_TEST_OUT}" --junit-xml reports/unittests_results.xml ${TOX_ARGS}'
         //                 echo "Reportint coverage to CodeCov"
-        //                 sh 'tox -e codecov -- -F unit'
+        //                 sh 'tox -e codecov --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -- -F unit'
         //             }
         //             post {
         //                 always {
@@ -122,9 +124,9 @@ pipeline {
         //                 echo "${env.PATH}"
         //                 sh '.jenkins/scripts/setup_dirs.sh'
         //                 echo "Regression tests"
-        //                 sh 'tox -e py312-reg -v -r -- --basetemp=${DRAGONS_TEST_OUT} --junit-xml reports/regression_results.xml ${TOX_ARGS}'
+        //                 sh 'tox -e py312-reg --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -v -- --basetemp="${DRAGONS_TEST_OUT}" --junit-xml reports/regression_results.xml ${TOX_ARGS}'
         //                 echo "Reporting coverage"
-        //                 sh 'tox -e codecov -- -F regression'
+        //                 sh 'tox -e codecov --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -- -F regression'
         //             } // end steps
         //             post {
         //                 always {
@@ -162,9 +164,9 @@ pipeline {
                         checkout scm
                         sh '.jenkins/scripts/setup_dirs.sh'
                         echo "Running tests"
-                        sh 'tox -e py312-scorpio -v -- --basetemp=${DRAGONS_TEST_OUT} --junit-xml reports/scorpio_results.xml ${TOX_ARGS}'
+                        sh 'tox -e py312-scorpio --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -v -- --basetemp="${DRAGONS_TEST_OUT}" --junit-xml reports/scorpio_results.xml ${TOX_ARGS}'
                         echo "Reporting coverage"
-                        sh 'tox -e codecov -- -F scorpio'
+                        sh 'tox -e codecov --workdir "${SHARED_TOX_DIR}" --skip-pkg-install -- -F scorpio'
                     }  // end steps
                     post {
                         always {
