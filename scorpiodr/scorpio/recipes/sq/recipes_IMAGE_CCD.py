@@ -17,14 +17,18 @@ def reduce(p):
     """
 
     p.prepare()
+    p.writeOutputs()
     p.addDQ()
     p.addVAR(read_noise=True)
+    p.writeOutputs()
     p.overscanCorrect()
     p.biasCorrect()
     p.ADUToElectrons()
+    p.writeOutputs()
     p.addVAR(poisson_noise=True)
     p.darkCorrect()   # TBD if truly needed
     p.flatCorrect()
+    p.writeOutputs()
     #p.fringeCorrect()
     p.stackIntegrations()
     p.detectSources()
