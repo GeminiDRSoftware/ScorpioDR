@@ -52,25 +52,8 @@ class Scorpio(Gemini):
             dark_list = (dark, None)
 
         for ad, dark, origin in zip(*gt.make_lists(adinputs, *dark_list, force_ad=(1,))):
-            for ext in ad:
-                nints = ext.data.shape[0]
-                data_list, mask_list, variance_list = [], [], []
-                for i in range(nints):
-                    temp_ad = astrodata.create(ad.phu)
-                    temp_ad.append(ext.nddata[i], header=ext.hdr)
-                    dark_corrected = super().darkCorrect(adinputs=[temp_ad], suffix=suffix, dark=dark, do_cal=do_cal)
-                    data_list.append(dark_corrected[0][0].data)
-                    mask_list.append(dark_corrected[0][0].mask)
-                    variance_list.append(dark_corrected[0][0].variance)
-                if dark is not None:
-                    ext.reset(np.array(data_list),
-                                       mask=np.array(mask_list),
-                                       variance=np.array(variance_list))
-            if dark is None:
-                continue
-            ad.phu.set('DARKIM', dark.filename, self.keyword_comments['DARKIM'])
-            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-            ad.update_filename(suffix=suffix, strip=True)
+            ad = super().darkCorrect([ad], suffix=suffix, dark=dark, do_cal=do_cal)
+
         return adinputs
 
     def flatCorrect(self, adinputs=None, suffix=None, flat=None, do_cal=None):
@@ -84,25 +67,8 @@ class Scorpio(Gemini):
             flat_list = (flat, None)
 
         for ad, flat, origin in zip(*gt.make_lists(adinputs, *flat_list, force_ad=(1,))):
-            for ext in ad:
-                nints = ext.data.shape[0]
-                data_list, mask_list, variance_list = [], [], []
-                for i in range(nints):
-                    temp_ad = astrodata.create(ad.phu)
-                    temp_ad.append(ext.nddata[i], header=ext.hdr)
-                    flat_corrected = super().flatCorrect(adinputs=[temp_ad], suffix=suffix, flat=flat, do_cal=do_cal)
-                    data_list.append(flat_corrected[0][0].data)
-                    mask_list.append(flat_corrected[0][0].mask)
-                    variance_list.append(flat_corrected[0][0].variance)
-                if flat is not None:
-                    ext.reset(np.array(data_list),
-                                       mask=np.array(mask_list),
-                                       variance=np.array(variance_list))
-            if flat is None:
-                continue
-            ad.phu.set("FLATIM", flat.filename, self.keyword_comments["FLATIM"])
-            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-            ad.update_filename(suffix=suffix, strip=True)
+            ad = super().flatCorrect([ad], suffix=suffix, flat=flat, do_cal=do_cal)
+
         return adinputs
 
     def stackIntegrations(self, adinputs=None, **params):
@@ -111,6 +77,10 @@ class Scorpio(Gemini):
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
         sfx = params["suffix"]
+
+        # This primitive pre-dates the change in data format from 4D to 2D and
+        # would need changing to stack groups of input files from the same
+        # exposure/position if it's actually needed, but it might not be.
 
         # Each input AD should contain 3-D extension(s), the first axis being
         # the integration axis. We're going to loop over the ADs and split the
@@ -202,25 +172,9 @@ class Scorpio(Gemini):
         """
         adinputs = super().standardizeStructure(adinputs, **params)
 
-        for ad in adinputs:
-            if "CCD" in ad.tags:     # VIS
-                for ext in ad:
-                    if "CAL" in ad.tags:
-                        # Remove the group axis and integrations axis
-                        # For CALs, there's only 1 integration per exposure and we need a stackable 2-D image
-                        ext.reset(ext.nddata[0, 0])
-                        # Do we need to do something with the CAL WCS here?
-                        # remove_unused_world_axis() only works for 1 axis
-                    else:
-                        # Skip the dark frames preceding light frames in science frames in continuous window imaging.
-                        if "IMAGE" in ad.tags and ad.phu["WMODE"].upper() == "CONTINUOUS":
-                            ndarkf = ext.hdr.get["WNFDARK"]  # check validity?
-                            ext.reset(ext.nddata[ndarkf:, 0])
-                        else:   # full frame imaging, burst window imaging, or spectroscopy
-                            ext.reset(ext.nddata[:, 0])
-                        astrodata.wcs.remove_unused_world_axis(ext)
-            else:   # NIR
-                pass
+        # The SCORPIO-specific code here, for handling higher dimensions, was
+        # removed when the input data format changed from 4D to 2D in 2026.
+
         return adinputs
 
     def standardizeWCS(self, adinputs=None, **params):
