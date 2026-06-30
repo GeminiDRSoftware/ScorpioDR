@@ -70,8 +70,9 @@ class ScorpioCCD(Scorpio, CCD):
                 with suppress(AttributeError, KeyError):
                     del ext.hdr['OVRSECS*']
                     del ext.hdr['OVRSECP*']
-                    # This still needs checking more carefully:
-                    # Need to adjust DATSEC* or delete them.
+                    # The original DATSECn in untrimmed coords are superseded
+                    # by DATSEC (the descriptor returns a single, consolidated
+                    # section whether there is one keyword or four):
                     del ext.hdr[datasec_kw+'?']
 
         return adinputs
