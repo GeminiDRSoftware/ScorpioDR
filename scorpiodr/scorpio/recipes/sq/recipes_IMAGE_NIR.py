@@ -27,7 +27,6 @@ def reduce(p):
 
     p.darkCorrect()
     p.flatCorrect()
-    p.writeOutputs()
 
     # Initial sky subtraction (pre-masking)
     p.separateSky()
@@ -43,13 +42,10 @@ def reduce(p):
     # proper sky subtraction with source masked.
     p.associateSky()
     p.skyCorrect(mask_objects=True)
-    p.writeOutputs()
     p.stackIntegrations()
-    p.writeOutputs()
     p.detectSources()
     p.adjustWCSToReference()
     p.resampleToCommonFrame()
-    p.writeOutputs()
     p.stackFrames()
     return
 
