@@ -875,7 +875,12 @@ class ScorpioNearIR(Scorpio, NearIR):
             all_datasecs = ad.data_section()
 
             for ext, datasec in zip(ad, all_datasecs):
-                ext.reset(ext.nddata[:, :, datasec.y1:datasec.y2, datasec.x1:datasec.x2])
+                if len(ext.shape) > 2:
+                    # Just in case we're fed 3D/4D data again in future:
+                    ext.reset(..., ext.nddata[datasec.y1:datasec.y2, datasec.x1:datasec.x2])
+                else:
+                    # NDData bug doesn't allow slices with leading ellipsis:
+                    ext.reset(ext.nddata[datasec.y1:datasec.y2, datasec.x1:datasec.x2])
 
                 # Update the data section keywords in the header
                 sections, new_sections = gt.map_data_sections_to_trimmed_data(datasec)
