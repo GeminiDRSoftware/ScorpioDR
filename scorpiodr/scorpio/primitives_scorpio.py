@@ -76,41 +76,32 @@ class Scorpio(Gemini):
 
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        timestamp_key = self.timestamp_keys[self.myself()]
         sfx = params["suffix"]
 
-        # This primitive pre-dates the change in data format from 4D to 2D and
-        # would need changing to stack groups of input files from the same
-        # exposure/position if it's actually needed, but it might not be.
-
-        # Each input AD should contain 3-D extension(s), the first axis being
-        # the integration axis. We're going to loop over the ADs and split the
-        # 3-D extension along the first axis, creating a new temp list of ADs.
-        # Then call stackFrames in order to collapse these temp ADs into a single
-        # 2-D extension belonging to the original AD.
+        # Collect together & stack multiple integrations taken at the same
+        # pointing (based on their data labels). Modified from the original
+        # version that stacked cube planes when the format was 4-dimensonal.
+        exp_groups = {}
         for ad in adinputs:
-            for ext in ad:
-                ndims = len(ext.data.shape)
-                try:
-                    assert ndims == 3
-                except AssertionError:
-                    if ndims > 3:
-                        log.warning("Scorpio stackIntegrations - expected 3 dimensions and more than 3 found. No changes will be made to this extension.")
-                    else:
-                        log.warning("Scorpio stackIntegrations - expected 3 dimensions and less than 3 found. No changes will be made to this extension.")
-                    continue
-                int_list = []
-                nints = ext.data.shape[0]
-                for i in range(nints):
-                    temp_ad = astrodata.create(ad.phu)
-                    temp_ad.append(ext.nddata[i], header=ext.hdr)
-                    int_list.append(temp_ad)
-                flattened = self.stackFrames(int_list, **params)
-                ext.reset(flattened[0][0].nddata)
-                astrodata.wcs.remove_unused_world_axis(ext)
+            try:
+                expid, n_int = ad.data_label().rsplit('-', 1)
+            except AttributeError:
+                raise ValueError(f"Failed to read data label for {ad.filename}")
 
-            ad.update_filename(suffix=sfx, strip=True)
+            if expid not in exp_groups:
+                exp_groups[expid] = []
 
-        return adinputs
+            exp_groups[expid].append(ad)
+
+        adoutputs = []
+        for expid, group in exp_groups.items():
+            new_ad = self.stackFrames(group, **params)[0]
+            new_ad.update_filename(suffix=sfx, strip=True)
+            gt.mark_history(new_ad, primname=self.myself(), keyword=timestamp_key)
+            adoutputs.append(new_ad)
+
+        return adoutputs
 
     def standardizeInstrumentHeaders(self, adinputs=None, suffix=None):
         """
