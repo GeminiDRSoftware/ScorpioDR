@@ -39,57 +39,6 @@ class ScorpioNearIR(Scorpio, NearIR):
         self.inst_lookups = 'scorpiodr.scorpio.lookups'
         self._param_update(parameters_scorpio_nearIR)
 
-    def associateSky(self, adinputs=None, **params):
-
-        log = self.log
-        log.debug(gt.log_message("primitive", self.myself(), "starting"))
-        timestamp_key = self.timestamp_keys[self.myself()]
-
-        sky = params.pop('sky', [])
-        if sky:
-            # Produce a list of AD objects from the sky frame/list
-            ad_skies = sky if isinstance(sky, list) else [sky]
-            ad_skies = [ad if isinstance(ad, astrodata.AstroData) else
-                           astrodata.open(ad) for ad in ad_skies]
-        else:  # get from sky stream (put there by separateSky)
-            ad_skies = self.streams.get('sky', [])
-
-        # Timestamp and update filenames. Do now so filenames agree at end
-        for ad in set(adinputs + ad_skies):
-            ad.update_filename(suffix=params['suffix'], strip=True)
-            gt.mark_history(ad, primname=self.myself(), keyword=timestamp_key)
-
-        # Split integrations stacked in the 3rd array dimension into separate
-        # 2D images, as expected by the core primitive:
-        split_obj, obj_map = self._split_integrations_to_ad(adinputs)
-        split_sky, sky_map = self._split_integrations_to_ad(ad_skies)
-
-        # Now run the core primitive on the split integrations, as usual:
-        split_obj = super().associateSky(split_obj, sky=split_sky, **params)
-
-        # Restore the original sky stream, since the core primitive overrides
-        # it from the split_sky argument above:
-        self.streams['sky'] = ad_skies
-
-        # Combine the SKYTABLE entries for individual integrations into a set
-        # for each input ad, with the integration numbers in separate columns:
-        sky_data = {ad.filename : [] for ad in adinputs}
-        for ad in split_obj:
-            obj_ad, obj_int = obj_map[ad.filename]
-            for sky_fn in ad.SKYTABLE['SKYNAME']:
-                sky_ad, sky_int = sky_map[sky_fn]
-                sky_data[obj_ad.filename].append(
-                    (np.int16(obj_int), sky_ad.filename, np.int16(sky_int))
-                )
-
-        for ad in adinputs:
-            ad.SKYTABLE = Table(
-                names=('OBJINT', 'SKYNAME', 'SKYINT'),
-                rows=sky_data[ad.filename]
-            )
-
-        return adinputs
-
     def calculateSignalByRegression(self, adinputs=None, **params):
         """
         Iteratively fit a slope, intercept, and cosmic rays to a ramp.
@@ -557,63 +506,6 @@ class ScorpioNearIR(Scorpio, NearIR):
         adinputs = self.subtractReferencePixels(adinputs, 
                     **self._inherit_params(params, "subtractReferencePixels"))
         adinputs = self.trimReferencePixels(adinputs, suffix=params["suffix"])
-        return adinputs
-
-    def skyCorrect(self, adinputs=None, **params):
-        log = self.log
-        log.debug(gt.log_message("primitive", self.myself(), "starting"))
-        # timestamp_key = self.timestamp_keys[self.myself()]
-
-        suffix = params["suffix"]
-
-        ad_skies = self.streams["sky"] if "sky" in self.streams else adinputs
-
-        # Split integrations stacked in the 3rd array dimension into separate
-        # 2D images, as expected by the core primitive:
-        split_obj, obj_map = self._split_integrations_to_ad(adinputs)
-        split_sky, sky_map = self._split_integrations_to_ad(ad_skies)
-
-        self.streams["sky"] = split_sky  # temp hack till sky param fixed
-
-        split_obj = super().skyCorrect(split_obj, **params)
-
-        self.streams["sky"] = ad_skies   # still needed anyway?
-
-        # Update the mapping keys with the new file suffix, after running the
-        # core skyCorrect (don't just update names before splitting, because
-        # skyCorrect expects specific suffixes):
-        del sky_map  # just so it's not inconsistent
-        obj_map = {
-            self._modify_filename_components(
-                split_fn, n_int=None, suffix=suffix
-            ) : entry for split_fn, entry in obj_map.items()
-        }
-
-        # Although the split ad instances are views into the original adinputs,
-        # the sky subtraction can make copies and appears not to change the
-        # parent objects (which could make a brittle assumption anyway), so
-        # copy the results (& some meta-data updates) into adinputs explicitly:
-        for ad in split_obj:
-            orig_ad, n_int = obj_map[ad.filename]
-            if n_int == 0:
-                orig_ad.update_filename(suffix=suffix, strip=True)
-                orig_ad.phu.update({
-                    k : (ad.phu[k], ad.phu.comments[k])
-                    for k in set(ad.phu)-set(orig_ad.phu)
-                })  # replaces "mark_history()"
-            if len(ad) != len(orig_ad):
-                raise ValueError(  # shouldn't happen, but just for clarity
-                    "number of integrations must not vary between extensions"
-                )
-            for split_ext, orig_ext in zip(ad, orig_ad):
-                idx = n_int if len(orig_ext.shape) > 2 else slice(None)
-                # NDData apparently doesn't support assignment to a section!
-                orig_ext.data[idx] = split_ext.data
-                if orig_ext.variance is not None:
-                    orig_ext.variance[idx] = split_ext.variance
-                if orig_ext.mask is not None:
-                    orig_ext.mask[idx] = split_ext.mask
-
         return adinputs
 
     def subtractReferencePixels(self, adinputs=None, **params):
