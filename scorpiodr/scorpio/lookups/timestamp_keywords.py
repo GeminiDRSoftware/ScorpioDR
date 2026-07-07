@@ -4,4 +4,5 @@ timestamp_keys = {
     # has completed
 
     "myNewPrimitive": "NEWPRIM",
+    "stackIntegrations": "STACKINT",
 }
