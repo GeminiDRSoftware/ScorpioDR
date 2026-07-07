@@ -170,3 +170,72 @@ class Scorpio(Gemini):
 
     def standardizeWCS(self, adinputs=None, **params):
         return adinputs
+
+    def transferAttribute(self, adinputs=None, source=None, **params):
+        """
+        This primitive takes an attribute (e.g., "mask", or "OBJCAT") from
+        the AD(s) in another ("source") stream and applies it to the ADs in
+        this stream. There must be the same number of ADs in each stream, or
+        only 1 in the source stream, or (where there are multiple
+        sub-integrations per "exposure") exactly 1 per unique exposure in the
+        source stream, with the primary stream grouped by exposure.
+
+        Parameters
+        ----------
+        suffix: str
+            suffix to be added to output files
+        source: str
+            name of stream containing ADs whose attributes you want
+        attribute: str
+            attribute to transfer from ADs in other stream
+        """
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+
+        if source not in self.streams.keys():
+            log.info(f"Stream {source} does not exist so nothing to transfer")
+            return adinputs
+
+        source_length = len(self.streams[source])
+        exp_groups = {}
+        if not (source_length == 1 or source_length == len(adinputs)):
+            fail = False
+            for ad in adinputs:
+                try:
+                    expid, n_int = ad.data_label().rsplit('-', 1)
+                except AttributeError:
+                    log.warning(f"Failed to read data label for {ad.filename}")
+                    fail = True
+                    break
+
+                if expid in exp_groups:
+                    if expid != last_expid:
+                        log.warning("Exposure groups out of order")
+                        fail = True
+                        break
+                else:
+                    exp_groups[expid] = []
+                    last_expid = expid
+
+                exp_groups[expid].append(ad)
+
+            if fail or (source_length != len(exp_groups)):
+                log.warning("Incompatible stream lengths/order: "
+                            f"{len(adinputs)} and {source_length}")
+                return adinputs
+
+        if exp_groups:
+            adoutputs = adinputs
+            source_stream = self.streams[source]
+            for expid, sourcead in zip(exp_groups, source_stream):
+                self.streams['expgroup'] = exp_groups[expid]
+                self.streams[source] = [sourcead]
+                super().transferAttribute(stream='expgroup',
+                                          source=source,
+                                          **params)
+            del self.streams['expgroup']
+            self.streams[source] = source_stream
+        else:
+            adinputs = super().transferAttribute(adinputs, source, **params)
+
+        return adinputs
