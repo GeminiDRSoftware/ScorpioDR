@@ -103,6 +103,21 @@ class Scorpio(Gemini):
 
         return adoutputs
 
+    def standardizeHeaders(self, adinputs=None, **params):
+
+        # Need to restore input units because standardizeObservatoryHeaders
+        # just sets everything to ADU when running prepare. Remove this method
+        # if DRAGONS is changed only to do so when the keyword is missing.
+        units = [ad.hdr['BUNIT'] for ad in adinputs]
+
+        adinputs = super().standardizeHeaders(adinputs, **params)
+
+        for ad, ulist in zip(adinputs, units):
+            for ext, u in zip(ad, ulist):
+                ext.hdr.set('BUNIT', u)
+
+        return adinputs
+
     def standardizeInstrumentHeaders(self, adinputs=None, suffix=None):
         """
         This primitive is used to make the changes and additions to the keywords in the headers of SCORPIO data, specifically.
