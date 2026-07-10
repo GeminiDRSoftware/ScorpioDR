@@ -16,59 +16,59 @@ datasets = {
     # Simulated dataset doesn't follow the usual DHS naming:
     "sim-i-imaging-full": {
         "bias": {"SCORPIO-i-1-IMAGING-FULL-BIAS-20231003-130052-1.fits" :
-                 drive_url + "&id=1reUybEi-4bpfCvA-TVTDL2I9OoI-K7xN",
+                 drive_url + "&id=1TV-fQgGC595AZhA8pzngLocMrULdzbZ0",
                  "SCORPIO-i-2-IMAGING-FULL-BIAS-20231003-130052-1.fits" :
-                 drive_url + "&id=1GvF5rquFbIC1b9uiRvUCKt4mHgAiyj5v",
+                 drive_url + "&id=11OX11TGCxFBwfBKPP5vnlohDs3YUFYoF",
                  "SCORPIO-i-3-IMAGING-FULL-BIAS-20231003-130052-1.fits" :
-                 drive_url + "&id=1kLK57n5PbT00GcmyGa5snj2NiFcarg3H",
+                 drive_url + "&id=1iW5VWzk-N4PZvyafSnG9Lc1wsb6IQeEK",
                  "SCORPIO-i-4-IMAGING-FULL-BIAS-20231003-130052-1.fits" :
-                 drive_url + "&id=1FGhKyvt5f5sAHyJweT8pQ0hGrOFWxERU",
+                 drive_url + "&id=1jU2Qv5J2fTpcseeZ1N8ZfHqPWiHoHmEo",
                  "SCORPIO-i-5-IMAGING-FULL-BIAS-20231003-130052-1.fits" :
-                 drive_url + "&id=1UapbeT3YcjC4Iw8Avsrk3c0w6ijmv2eq"},
+                 drive_url + "&id=1EyYFU499Bg6mGlovn9L4pNC45KiuKA-H"},
         "dark": {"SCORPIO-i-1-IMAGING-FULL-DARK-20231003-130122-1.fits" :
-                 drive_url + "&id=1c1ANFZg-cqqDAGxNyFP-_cYEybFyHbLg",
+                 drive_url + "&id=1WM8Cgvm0Xp8lju_G1_HWKS2n6hcBKKAN",
                  "SCORPIO-i-2-IMAGING-FULL-DARK-20231003-130122-1.fits" :
-                 drive_url + "&id=1dnBFECKvanNQebZIlJr6LkE5AaUXmb8e",
+                 drive_url + "&id=1IeZwy6azxcS6lfwYCYwgJZyCxDqDgsYP",
                  "SCORPIO-i-3-IMAGING-FULL-DARK-20231003-130122-1.fits" :
-                 drive_url + "&id=1FH03OeUVyLWVrWA4TKUqkpCU4G9l8ot3",
+                 drive_url + "&id=1sqmug1PQC1WycxQuokZAMOCw85PppIde",
                  "SCORPIO-i-4-IMAGING-FULL-DARK-20231003-130122-1.fits" :
-                 drive_url + "&id=1fMQzDeZNUE0Jd5wlNVf53mrEOcupc8wC",
+                 drive_url + "&id=1nL3GP5xqMTCLJ-qq31CYrJMizJU21OTr",
                  "SCORPIO-i-5-IMAGING-FULL-DARK-20231003-130122-1.fits" :
-                 drive_url + "&id=18eCnyrJyiXb1LMT_MB47hYInZMJhzu1H"},
+                 drive_url + "&id=1LPkqt1QvSSXUXO9t9XvZcdAw5v0VGuxb"},
         "flat": {"SCORPIO-i-1-IMAGING-FULL-FLAT-DOME-20231211-120210-1.fits" :
-                 drive_url + "&id=1JP43k_fNXndUSZOSti2v3aD78xguL4_P",
+                 drive_url + "&id=1StuLxJaCFF9XgBMhPMC1I6ae92tWpty6",
                  "SCORPIO-i-2-IMAGING-FULL-FLAT-DOME-20231211-120210-1.fits" :
-                 drive_url + "&id=13yivmWNll3189-2pMI3EaPBBhmFYduih",
+                 drive_url + "&id=1nuwlmmWHVrrO2oLy0UQXMMHWPUdfy4H8",
                  "SCORPIO-i-3-IMAGING-FULL-FLAT-DOME-20231211-120210-1.fits" :
-                 drive_url + "&id=1vTVcFwCZASpjggfEWijr3efqh-Amz7GL",
+                 drive_url + "&id=1zuXBTE0gZplKNvTERQxzS0-QEbRes081",
                  "SCORPIO-i-4-IMAGING-FULL-FLAT-DOME-20231211-120210-1.fits" :
-                 drive_url + "&id=1ToDSE_CJS7k2l4KaStINt5XJADidumKZ",
+                 drive_url + "&id=1FSTaQe2PvkDClDGEd8tIBmK0tKHM5Ej-",
                  "SCORPIO-i-5-IMAGING-FULL-FLAT-DOME-20231211-120210-1.fits" :
-                 drive_url + "&id=1J6PpJNsjG-jikj7EdLuMmb97plbsLQTc"},
+                 drive_url + "&id=1FgKabAPgmKzoDEl4QRiQ2ZJM70GG7Gpe"},
         "sci": {"SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030-1.fits" :
-                drive_url + "&id=1x1EiEHP4L9VAnWJgxS7zkuxzt2q7BCBt",
+                drive_url + "&id=10PEUJ4wuGiODA5X7QwjYMnOwcQSMkuha",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030-2.fits" :
-                drive_url + "&id=1ZvlIr3k90iRKareoxNmSyN_onuqTfYh4",
+                drive_url + "&id=1fvqcYYZLPknB8hlThjLanRWHFd_4ps2E",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030-3.fits" :
-                drive_url + "&id=1woyFepT8XNy-TBrJqVwAV3op9rtqqdmT",
+                drive_url + "&id=1dUDCc0kQXYC6q1Wf1OVkNGJEr3g8oGlF",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-161922-1.fits" :
-                drive_url + "&id=1r2q3DMBf7f7tOsQQyjijBv8RXMM-0Woj",
+                drive_url + "&id=1Bkp2soWvXRi5m17VWAzo91tKWyMCoXcS",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-161922-2.fits" :
-                drive_url + "&id=18dXzWTPzVHnCQnTuUMXGctj8BpxNZFOU",
+                drive_url + "&id=1k5FmtO2qDzbHI3eBBLHxRE-A961qye6O",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-161922-3.fits" :
-                drive_url + "&id=1GvF5rquFbIC1b9uiRvUCKt4mHgAiyj5v",
+                drive_url + "&id=1ocnPDdLAT36mXihipTBQ7waI99SR07km",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-163737-1.fits" :
-                drive_url + "&id=1omRnc8KY0Y9mWY1zxkl-nlQtJlItqADu",
+                drive_url + "&id=1bFssqFy0gZK_7au7lU0H6GG6UAusAdGd",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-163737-2.fits" :
-                drive_url + "&id=100zudHTtnQeo6S-NinihK1ciwF1Up9Ju",
+                drive_url + "&id=1UTXqpruQaaAub4uMy9MLsAsxza2kXX0V",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-163737-3.fits" :
-                drive_url + "&id=10lV6Dq_o4-6T41vm_0_zOPmVimCGdihI",
+                drive_url + "&id=1VjcEj3TPPmiXSGxHtAl3lRORz2kVGdZ0",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240917-080911-1.fits" :
-                drive_url + "&id=1FM_bLSotWZWUifGdomnzXKlxA0uEnxVn",
+                drive_url + "&id=1OJeu4mD3LDv-aRxjgSAeNU0_jOX8dSie",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240917-080911-2.fits" :
-                drive_url + "&id=1cknSYQ4377-TUtXuaWvOJ0XjaO737ECq",
+                drive_url + "&id=1p52d4L79SVvUFyIcvd86MoIvFBKWb4UB",
                 "SCORPIO-i-1-IMAGING-FULL-OBJECT-20240917-080911-3.fits" :
-                drive_url + "&id=1JQwNO8UV2hHRn7qp2WK16uYzMgigrrsc"},
+                drive_url + "&id=1I--GdUjDebS1TeOL5VmxKs84fpTxet3C"},
         "ucals": [],
         "refs" : ["SCORPIO-i-1-IMAGING-FULL-OBJECT-20240916-155030-1_stack.fits"],
     },
