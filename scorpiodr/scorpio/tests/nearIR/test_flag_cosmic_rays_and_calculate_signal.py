@@ -23,6 +23,7 @@ datasets = [
     "SCORPIO-H-1-IMAGING-FULL-OBJECT-20240919-094559_refpixelsCorrected.fits",
 ]
 
+@pytest.mark.skip("Processing steps no longer done in DRAGONS for 2D format")
 @pytest.mark.scorpioimage
 @pytest.mark.preprocessed_data
 @pytest.mark.regression
