@@ -16,14 +16,22 @@ def reduce(p):
         A primitive set matching the recipe_tags.
     """
 
+    # This draft assumes that, with the new 2D data format, ADUToElectrons,
+    # nonlinearityCorrect & calculateSignalByRegression have already been done
+    # on-instrument. It still has to be determined how/where/whether to include
+    # referencePixelsCorrect in this scenario, while flagCosmicRaysFromNDRs
+    # has been dropped from the processing. A SCORPIO implementation of addVAR
+    # will be needed, to account (approximately) for the data units and scaling
+    # of read noise, according to whatever algorithm is used for combining
+    # reads on the instrument; the placeholder VAR estimate is incorrect.
+
     p.prepare()
     p.addDQ()
-    p.ADUToElectrons()
-    p.addVAR(read_noise=True, poisson_noise=True)
-    p.nonlinearityCorrect()
-    p.referencePixelsCorrect()
-    p.flagCosmicRaysFromNDRs()
-    p.calculateSignalByRegression()
+    p.ADUToElectrons()  # should be a no-op?
+    p.nonlinearityCorrect()  # should be a no-op?
+    p.addVAR(read_noise=True, poisson_noise=True)  # VAR needs fixing!
+    # p.referencePixelsCorrect()  # can this be done after combining reads?
+    p.trimReferencePixels()  # remove if & when referencePixelsCorrect works
 
     p.darkCorrect()
     p.flatCorrect()

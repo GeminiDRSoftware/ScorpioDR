@@ -21,13 +21,11 @@ def makeProcessedDark(p):
 
     p.prepare()
     p.addDQ()
-    p.addVAR(read_noise=True)
-    p.nonlinearityCorrect()
-    p.ADUToElectrons()
-    p.addVAR(poisson_noise=True)
-    p.referencePixelsCorrect()
-    p.flagCosmicRaysFromNDRs()
-    p.calculateSignalByRegression()
+    p.ADUToElectrons()  # no-op?
+    p.nonlinearityCorrect()  # no-op?
+    p.addVAR(read_noise=True, poisson_noise=True)
+    # p.referencePixelsCorrect()
+    p.trimReferencePixels()
     p.stackDarks()
     p.storeProcessedDark()
     return
