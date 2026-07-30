@@ -7,5 +7,5 @@ from .lookup import filter_wavelengths
 
 factory.addClass(AstroDataScorpio)
 
-addInstrumentFilterWavelengths('Scorpio', filter_wavelengths)
+addInstrumentFilterWavelengths('SCORPIO', filter_wavelengths)
 
