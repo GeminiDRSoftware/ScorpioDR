@@ -231,6 +231,62 @@ class AstroDataScorpio(AstroDataGemini):
         return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
+    def detector_x_bin(self):
+        """
+        Returns the detector binning in the x-direction
+
+        Returns
+        -------
+        int
+            The detector binning
+        """
+
+        def _get_xbin(b):
+            try:
+                return int(b.split()[0])
+            except (AttributeError, ValueError):
+                return None
+
+        binning = self.hdr.get('CCDSUM')
+        if self.is_single:
+            return _get_xbin(binning) if 'CCD' in self.tags else 1
+        else:
+            if 'CCD' in self.tags:
+                xbin_list = [_get_xbin(b) for b in binning]
+            else:
+                xbin_list = [1 for ext in self]
+            # Check list is single-valued
+            return xbin_list[0] if xbin_list[1:] == xbin_list[:-1] else None
+
+    @astro_data_descriptor
+    def detector_y_bin(self):
+        """
+        Returns the detector binning in the y-direction
+
+        Returns
+        -------
+        int
+            The detector binning
+        """
+
+        def _get_ybin(b):
+            try:
+                return int(b.split()[1])
+            except (AttributeError, ValueError, IndexError):
+                return None
+
+        binning = self.hdr.get('CCDSUM')
+        if self.is_single:
+            return _get_ybin(binning) if 'CCD' in self.tags else 1
+        else:
+            if 'CCD' in self.tags:
+                ybin_list = [_get_ybin(b) for b in binning]
+            else:
+                ybin_list = [1 for ext in self]
+            # Check list is single-valued
+            return ybin_list[0] if ybin_list[1:] == ybin_list[:-1] else None
+
+    @astro_data_descriptor
     def gain(self):
         """
         Returns the gain (electrons/ADU) for each amplifier in each extension. 
