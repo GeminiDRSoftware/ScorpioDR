@@ -16,7 +16,7 @@ phudict = {
         'INPORT'   : 5,
         'IMTYPE'   : 'full',  # delete when Rodolfo confirms change
         'NEXTEND'  : 1,
-        'SLITSIZE' : 4.32,
+        'SLITSIZE' : '4.32arcsec',
         'UTR*'     : None,
     },
     'bias' : {
@@ -28,6 +28,7 @@ phudict = {
         'DATALAB'  : 'G-2019B-0207-Q-0014-0002-0001',
         'GCAL*'    : None,
         'SHUTTER'  : 'CLOSED',
+        'SLITSIZE' : 'None',
     },
     'flat' : {
         'OBJECT'   : 'GCALflat',
