@@ -38,10 +38,14 @@ class AstroDataScorpio(AstroDataGemini):
     #    else:
     #        return TagSet(blocks=['BUNDLE'])
 
-    @astro_data_tag
-    def _tag_dark(self):
-        if self.phu.get('OBSTYPE') == 'DARK':
-            return TagSet(['DARK', 'CAL'], blocks=['IMAGE', 'SPECT'])
+    def _tag_is_bias(self):
+        return self.phu.get('OBSTYPE') == 'BIAS'
+
+    def _tag_is_bpm(self):
+        return self.phu.get('OBSTYPE') == 'BPM' or 'BPMASK' in self.phu
+
+    def _tag_is_dark(self):
+        return self.phu.get('OBSTYPE') == 'DARK'
 
     @astro_data_tag
     def _tag_arc(self):
@@ -50,8 +54,13 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_tag
     def _tag_bias(self):
-        if self.phu.get('OBSTYPE') == 'BIAS':
+        if self._tag_is_bias():
             return TagSet(['BIAS', 'CAL', 'CCD'], blocks=['IMAGE', 'SPECT'])
+
+    @astro_data_tag
+    def _tag_dark(self):
+        if self._tag_is_dark():
+            return TagSet(['DARK', 'CAL'], blocks=['IMAGE', 'SPECT'])
 
     @astro_data_tag
     def _tag_flat(self):
@@ -69,6 +78,14 @@ class AstroDataScorpio(AstroDataGemini):
         #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
         if self.phu.get('CHANNEL').upper() in ['Y','J','H','K']:
             return TagSet(['NIR'], blocks=['CCD'])
+
+    @astro_data_tag
+    def _tag_ls(self):
+        if self._tag_is_bias() or self._tag_is_dark() or self._tag_is_bpm():
+            return
+
+        if str(self.phu.get('SLITSIZE', '')).endswith('arcsec'):
+            return TagSet(['LS'])
 
     @astro_data_tag
     def _flat_type(self):
