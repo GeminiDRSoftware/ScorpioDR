@@ -12,7 +12,7 @@ from . import parameters_scorpio_ccd_spect
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioCCDSpect(ScorpioCCD, Spect):
+class ScorpioCCDSpect(Spect, ScorpioCCD):
     """
     This class contains primitives that applies to all Scorpio optical
     spectroscopy data.

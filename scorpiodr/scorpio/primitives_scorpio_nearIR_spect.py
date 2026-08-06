@@ -12,7 +12,7 @@ from . import parameters_scorpio_nearIR_spect
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioNearIRSpect(ScorpioNearIR, Spect):
+class ScorpioNearIRSpect(Spect, ScorpioNearIR):
     """
     This class contains primitives that applies to all Scorpio near-IR
     spectroscopy data.
