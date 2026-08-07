@@ -286,6 +286,19 @@ class AstroDataScorpio(AstroDataGemini):
             # Check list is single-valued
             return ybin_list[0] if ybin_list[1:] == ybin_list[:-1] else None
 
+    @returns_list
+    @astro_data_descriptor
+    def dispersion_axis(self):
+        """
+        Returns the axis along which the light is dispersed.
+
+        Returns
+        -------
+        (list of) int (1)
+            Dispersion axis.
+       """
+        return 1
+
     @astro_data_descriptor
     def gain(self):
         """
