@@ -40,7 +40,13 @@ phudict = {
         'SHUTTER'  : 'CLOSED',
     },
     'arc' : {
-
+        'OBJECT'   : 'CuAr',
+        'OBSTYPE'  : 'ARC',
+        'OBSCLASS' : 'dayCal',
+        'OBSID'    : 'G-2019B-0207-Q-0016',
+        'DATALAB'  : 'G-2019B-0207-Q-0016-0002-0001',
+        'GCALLAMP' : 'CuAr',
+        'SHUTTER'  : 'CLOSED',
     },
     'std' : {
 
