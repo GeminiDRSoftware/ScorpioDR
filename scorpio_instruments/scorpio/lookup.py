@@ -1,8 +1,3 @@
-
-# If the filters name and central wavelength are different from 
-# the global definitions in gemini_instruments/gemini/lookup.py
-# redefine them here in filter_wavelengths.
-
 filter_wavelengths = {
     'g'   : 0.469,
     'r'   : 0.622, 
