@@ -20,6 +20,7 @@ class AstroDataScorpio(AstroDataGemini):
                           data_section='DATSEC',
                           detector_name='DETECTOR',
                           read_noise='RDNOIS',
+                          slit='SLITSIZE',
                           )
 
     @staticmethod
@@ -492,6 +493,21 @@ class AstroDataScorpio(AstroDataGemini):
     def saturation_level(self):
         # temporary value for testing dragons compatibility before real data
         return 65535
+
+    @astro_data_descriptor
+    def slit_width(self):
+        """
+        Returns the width of the slit in arcseconds
+
+        Returns
+        -------
+        float/None
+            the slit width in arcseconds
+        """
+        fpmask = self.slit()
+        if fpmask and 'arcsec' in fpmask:
+            return float(fpmask.replace('arcsec', ''))
+        return None
 
     def _build_section_lists(self, keyword, pretty=False):
         # See if there is only one keyword without a number
