@@ -1,7 +1,9 @@
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
+from gemini_instruments import gmu
 from gemini_instruments.gemini import AstroDataGemini
 from gemini_instruments.common import Section
 
+from . import lookup
 
 def tuple_to_section(sec, pretty=False):
     return sec.asIRAFSection() if pretty else sec
@@ -180,6 +182,26 @@ class AstroDataScorpio(AstroDataGemini):
                  if pretty else asec) for asec in arrsec]
 
     @astro_data_descriptor
+    @gmu.return_requested_units(input_units="um")
+    def central_wavelength(self):
+        """
+        Returns the central wavelength for a spectrum (in m by default)
+
+        Returns
+        -------
+        float
+            The central wavelength setting
+        """
+
+        val = self.phu.get(self._keyword_for('central_wavelength'), None)
+
+        if val is None:
+            chan = self.channel() or self.filter_name(pretty=True)
+            val = lookup.central_wavelengths.get(chan)
+
+        return float(val) if val else None
+
+    @astro_data_descriptor
     def channel(self):
         """
         Returns the channel name. Returns a string if the Scorpio file is 
@@ -285,6 +307,31 @@ class AstroDataScorpio(AstroDataGemini):
                 ybin_list = [1 for ext in self]
             # Check list is single-valued
             return ybin_list[0] if ybin_list[1:] == ybin_list[:-1] else None
+
+    @astro_data_descriptor
+    @gmu.return_requested_units()
+    def dispersion(self):
+        """
+        Returns the dispersion in nm per pixel as a list (one value per
+        extension) or a float if used on a single-extension slice. It is
+        possible to control the units of wavelength using the input arguments.
+
+        Returns
+        -------
+        list/float
+            The dispersion(s) in nm/pixel
+        """
+
+        chan = self.channel()
+        dispersion = lookup.dispersions.get(chan)
+
+        if dispersion is None:
+            return None
+
+        if not self.is_single:
+            dispersion = [dispersion] * len(self)
+
+        return dispersion
 
     @returns_list
     @astro_data_descriptor

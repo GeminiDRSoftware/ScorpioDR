@@ -1,3 +1,4 @@
+# Central wavelengths in microns:
 filter_wavelengths = {
     'g'   : 0.469,
     'r'   : 0.622, 
@@ -9,3 +10,17 @@ filter_wavelengths = {
     'Ks'  : 2.175,
 }
 
+# Spectrum wavelength at the middle of the detector for each channel (TBC):
+central_wavelengths = filter_wavelengths
+
+# Average dispersion/pix (unbinned) in nm (rough numbers from "ConOps" S4.3):
+dispersions = {
+    'g'   : 0.04077,
+    'r'   : 0.03394,
+    'i'   : 0.03101,
+    'z'   : 0.03467,
+    'Y'   : 0.07843,
+    'J'   : 0.09804,
+    'H'   : 0.12745,
+    'Ks'  : 0.17157,
+}
