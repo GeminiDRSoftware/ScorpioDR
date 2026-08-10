@@ -329,6 +329,8 @@ class AstroDataScorpio(AstroDataGemini):
         if dispersion is None:
             return None
 
+        dispersion *= self.detector_x_bin()
+
         if not self.is_single:
             dispersion = [dispersion] * len(self)
 
