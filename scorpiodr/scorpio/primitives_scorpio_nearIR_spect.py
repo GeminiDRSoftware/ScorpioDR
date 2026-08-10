@@ -3,16 +3,15 @@
 #
 #                                            primitives_scorpio_spect_nearIR.py
 # ------------------------------------------------------------------------------
-from geminidr.core import Spect
-from gempy.gemini import gemini_tools as gt
 from recipe_system.utils.decorators import parameter_override
 
+from .primitives_scorpio_spect import ScorpioSpect
 from .primitives_scorpio_nearIR import ScorpioNearIR
 from . import parameters_scorpio_nearIR_spect
 # ------------------------------------------------------------------------------
 
 @parameter_override
-class ScorpioNearIRSpect(Spect, ScorpioNearIR):
+class ScorpioNearIRSpect(ScorpioSpect, ScorpioNearIR):
     """
     This class contains primitives that applies to all Scorpio near-IR
     spectroscopy data.
