@@ -1,6 +1,8 @@
 import argparse
 import os
 
+import numpy as np
+
 from astropy.io import fits
 
 #from astrodata import open as adopen
@@ -149,6 +151,12 @@ for filename in args.filenames:
                         if isinstance(val, str):
                             val = val.replace('%chan', chan)
                         hdr[kw] = val
+
+    # Also add overscan pix, if missing:
+    for hdu in hdulist[1:]:
+        if (dim % 1024 == 0 for dim in hdu.data.shape):
+            hdu.data = np.pad(hdu.data, pad_width=10,
+                              mode='constant', constant_values=0)
 
     hdulist.writeto(fout, overwrite=True)
 
