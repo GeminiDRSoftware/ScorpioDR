@@ -27,7 +27,7 @@ def makeProcessedFlat(p):
     p.addVAR(poisson_noise=True)
     #p.darkCorrect()    # TBD if needed
     #p.scatteredLightCorrect()   # TBD if needed
-    p.stackFrames()
+    #p.stackFrames()             # TBD if needed; don't stack GMOS spec flats
     #p.applyWavelengthSolution()  # TBD if needed (depends on Gemini's algorithm)
     #p.QECorrect()                # TBD if needed (depends on Gemini's algorithm)
     p.normalizeFlat()
