@@ -1,6 +1,6 @@
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
-from gemini_instruments.gemini import AstroDataGemini
+from gemini_instruments.gemini import AstroDataGemini, get_specphot_name
 from gemini_instruments.common import Section
 
 from . import lookup
@@ -41,6 +41,19 @@ class AstroDataScorpio(AstroDataGemini):
     #    else:
     #        return TagSet(blocks=['BUNDLE'])
 
+    def _tag_is_spect(self):
+        # Should this look at the grating, or just OBSMODE (as for the tag)?
+        mode = self.phu.get(self._keyword_for('observation_mode'), '').upper()
+        return mode == 'SPECT'
+
+    def _tag_is_ccd(self):
+        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
+        return self.phu.get('CHANNEL', '').upper() in ['G','R','I','Z']
+
+    def _tag_is_nir(self):
+        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
+        return self.phu.get('CHANNEL', '').upper() in ['Y','J','H','K']
+
     def _tag_is_bias(self):
         return self.phu.get('OBSTYPE') == 'BIAS'
 
@@ -71,15 +84,23 @@ class AstroDataScorpio(AstroDataGemini):
             return TagSet(['FLAT', 'CAL'])
 
     @astro_data_tag
-    def _tag_is_ccd(self):
-        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
-        if self.phu.get('CHANNEL').upper() in ['G','R','I','Z']:
+    def _tag_standard(self):
+        if (
+            self._tag_is_spect() and
+            self.phu.get('OBSTYPE') == 'OBJECT' and
+            self.phu.get('OBSCLASS') in ('partnerCal', 'nightCal') and
+            (self._tag_is_nir() or get_specphot_name(self))
+        ):
+            return TagSet(['STANDARD', 'CAL'])
+
+    @astro_data_tag
+    def _tag_ccd(self):
+        if self._tag_is_ccd():
             return TagSet(['CCD'], blocks=['NIR'])
 
     @astro_data_tag
-    def _tag_is_nir(self):
-        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
-        if self.phu.get('CHANNEL').upper() in ['Y','J','H','K']:
+    def _tag_nir(self):
+        if self._tag_is_nir():
             return TagSet(['NIR'], blocks=['CCD'])
 
     @astro_data_tag
