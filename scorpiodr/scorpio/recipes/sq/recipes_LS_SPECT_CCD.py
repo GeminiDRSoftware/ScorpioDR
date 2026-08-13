@@ -64,7 +64,7 @@ def reduceStandard(p):
     p.attachWavelengthSolution()
     p.flatCorrect()
     p.distortionCorrect()
-    p.findSourceApertures(max_apertures=1)
+    p.findApertures(max_apertures=1)
     p.skyCorrectFromSlit()
     p.resampleToCommonFrame()
     p.stackFrames()
