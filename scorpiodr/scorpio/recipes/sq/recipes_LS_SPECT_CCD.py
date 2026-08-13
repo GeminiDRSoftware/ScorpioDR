@@ -1,10 +1,10 @@
 """
 Recipes available to data with tags ['SCORPIO', 'SPECT', 'CCD'].
-Default is "reduce".
+Default is "reduceScience".
 """
 recipe_tags = set(['SCORPIO', 'SPECT', 'CCD'])
 
-def reduce(p):
+def reduceScience(p):
     """
     This recipe process optical spectrum up to and including alignment and
     stacking.  A single stacked extracted and calibrated spectrum is produced.
@@ -42,7 +42,7 @@ def reduce(p):
     p.writeOutputs()
     return
 
-_default = reduce
+_default = reduceScience
 
 
 def reduceStandard(p):

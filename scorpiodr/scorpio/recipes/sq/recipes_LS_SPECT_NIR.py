@@ -1,10 +1,10 @@
 """
 Recipes available to data with tags ['SCORPIO', 'SPECT', 'NIR'].
-Default is "reduce".
+Default is "reduceScience".
 """
 recipe_tags = set(['SCORPIO', 'SPECT', 'NIR'])
 
-def reduce(p):
+def reduceScience(p):
     """
     This recipe process optical spectrum up to and including alignment and
     stacking.  A single stacked extracted and calibrated spectrum is produced.
@@ -38,7 +38,7 @@ def reduce(p):
     p.writeOutputs()
     return
 
-_default = reduce
+_default = reduceScience
 
 
 # are the tellurics identified as CAL?  If so, move to its own recipe file.
