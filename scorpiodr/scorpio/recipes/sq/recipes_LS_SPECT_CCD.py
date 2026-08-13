@@ -61,6 +61,7 @@ def reduceStandard(p):
     p.biasCorrect()
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
+    p.attachWavelengthSolution()
     p.flatCorrect()
     p.distortionCorrect()
     p.findSourceApertures(max_apertures=1)
