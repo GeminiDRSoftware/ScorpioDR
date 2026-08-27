@@ -375,7 +375,7 @@ class AstroDataScorpio(AstroDataGemini):
         """
         Returns the gain (electrons/ADU) for each amplifier in each extension. 
         Because Scorpio has multiple amplifiers per extension, this returns a 
-        list of floats per extension.
+        list of floats per extension for raw data.
         
         Returns
         -------
@@ -385,21 +385,23 @@ class AstroDataScorpio(AstroDataGemini):
 
         values = []
         keyword = self._keyword_for('gain')
-        for amp in range(1, 100):
-            value = self.hdr.get(f'{keyword}{amp}')
-            if self.is_single:
-                if value is None:
-                    break
-                values.append(value)
-            else:
-                if value[0] is None:
-                    break
-                values.append(value[0])
+
+        for ext in self:
+            extval = []
+            try:
+                extval = ext.hdr[keyword]  # once GAIN is set, overrides GAINn
+            except KeyError:
+                for amp in range(1, 100):
+                    value = ext.hdr.get(f'{keyword}{amp}')
+                    if value is None:
+                        break
+                    extval.append(value)
+            values.append(extval)
 
         if self.is_single:
-            return values
+            return values[0]
         else:
-            return [values]
+            return values
 
     @astro_data_descriptor
     def non_linear_level(self):
