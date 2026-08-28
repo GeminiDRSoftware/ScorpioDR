@@ -41,6 +41,21 @@ class Scorpio(Gemini):
         # and inherited and used by the ScorpioImage and ScorpioSpect class.
         return len(ad) in [1]
 
+    def ADUToElectrons(self, adinputs=None, suffix=None):
+        log = self.log
+        log.debug(gt.log_message("primitive", self.myself(), "starting"))
+        timestamp_key = self.timestamp_keys[self.myself()]
+
+        adinputs = super().ADUToElectrons(adinputs, suffix=suffix)
+
+        # Clean out GAINn to avoid confusion, now that the primitive has
+        # replaced them with GAIN=1.0.
+        for ad in adinputs:
+            for ext in ad:
+                del ext.hdr['GAIN?']
+
+        return adinputs
+
     def darkCorrect(self, adinputs=None, suffix=None, dark=None, do_cal=None):
         log = self.log
         log.debug(gt.log_message("primitive", self.myself(), "starting"))
