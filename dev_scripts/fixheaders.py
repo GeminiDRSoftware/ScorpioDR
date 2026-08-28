@@ -61,7 +61,12 @@ phudict = {
         'DEC'      : -28.5936027777778,
     },
     'sci' : {
-
+        'OBJECT'   : 'AT2026dyo',
+        'OBSTYPE'  : 'OBJECT',
+        'OBSCLASS' : 'science',
+        'OBSID'    : 'G-2019B-0207-Q-0015',
+        'DATALAB'  : 'G-2019B-0207-Q-0015-0003-0001',
+        'GCAL*'    : None,
     }
 }
 
