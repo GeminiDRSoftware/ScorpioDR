@@ -25,20 +25,24 @@ def reduceScience(p):
     p.addVAR(poisson_noise=True)
     #p.darkCorrect()
     #p.scatteredLightCorrect()
-    #p.applyWavelengthSolution()    # depends on Gemini's algorithm.
+    p.attachWavelengthSolution()
     #p.QECorrect()                  # depends on Gemini's algorithm.
     p.flatCorrect()
-    p.rejectCosmicRays()   # TDB
+    p.flagCosmicRays()
+    #p.applyDQPlane(replace_flags=8, inner=1.0, outer=5.0)
     p.distortionCorrect()
-    p.findSourceApertures()
+    p.findApertures()
     p.skyCorrectFromSlit()
-    p.resampleToCommonFrame()
+    p.adjustWCSToReference()
+    p.resampleToCommonFrame(conserve=True)  # default output_wave_scale="linear"
+    p.scaleCountsToReference()
     p.stackFrames()
-    p.findSourceApertures()
+    p.findApertures()
     p.traceApertures()
-    p.extract1DSpectra()
+    p.storeProcessedScience(suffix="_2D")
+    p.extractSpectra()
     p.fluxCalibrate()
-    p.linearizeSpectra()   # TBD
+    p.storeProcessedScience(suffix="_1D")
     p.writeOutputs()
     return
 
