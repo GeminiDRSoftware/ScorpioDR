@@ -70,11 +70,11 @@ def reduceStandard(p):
     p.distortionCorrect()
     p.findApertures(max_apertures=1)
     p.skyCorrectFromSlit()
+    p.traceApertures()
+    p.extractSpectra()
     p.resampleToCommonFrame(conserve=True)  # default output_wave_scale="linear"
     p.scaleCountsToReference()
     p.stackFrames()
-    p.traceApertures()
-    p.extractSpectra()
     p.calculateSensitivity()
     p.storeProcessedStandard()
     p.writeOutputs()
