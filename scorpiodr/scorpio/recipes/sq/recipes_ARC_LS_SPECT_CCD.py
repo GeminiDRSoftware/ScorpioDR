@@ -23,9 +23,10 @@ def makeProcessedArc(p):
     p.addDQ(static_bpm=None)
     p.addVAR(read_noise=True)
     p.overscanCorrect()
-    # p.biasCorrect()  # will we have biases for arcs?
+    p.biasCorrect()  # will we have biases for arcs?
     p.ADUToElectrons()
     p.addVAR(poisson_noise=True)
+    p.writeOutputs()
     p.determineWavelengthSolution()
     p.determineDistortion()
     p.storeProcessedArc()
