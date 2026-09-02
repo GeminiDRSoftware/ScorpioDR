@@ -169,6 +169,8 @@ for filename in args.filenames:
         if (dim % 1024 == 0 for dim in hdu.data.shape):
             hdu.data = np.pad(hdu.data, pad_width=10,
                               mode='constant', constant_values=0)
+        if chan in ['r', 'z'] and phu['DATE-OBS'] == '2020-07-09':  # 1st set
+            hdu.data = hdu.data[..., ::-1]  # flipped channels
 
     hdulist.writeto(fout, overwrite=True)
 
