@@ -173,10 +173,11 @@ class AstroDataScorpio(AstroDataGemini):
         value is returned without parsing as a string. In this format, the 
         coordinates are generally 1-based.
 
-        In the case of Scorpio, each extension returns either a list of tuples
-        (one per amplifier), or a single string containing a 1-indexed section
-        per amp, joined with commas. If the method is called on a single slice,
-        the sections are returned as tuples or a single string.
+        In the case of Scorpio, each extension returns a list of either Section
+        objects or (for pretty=True) strings containing 1-indexed sections, one
+        per amplifier. When this method is called on a top-level AstroData
+        instance, those are nested in an outer (usually length-1) list of
+        extensions.
 
         Parameters
         ----------
@@ -188,19 +189,19 @@ class AstroDataScorpio(AstroDataGemini):
         list of tuple of integers or list of list of tuples
             Positions of arrays in extension(s) using Python slice values.
 
-        str/list of str
+        list[str] | list[list[str]]
             Position of arrays in extension(s) using a 1-based section format.
         """
         arrsec = self._build_section_lists(self._keyword_for('array_section'))
         if self.is_single:
             return (tuple_to_section(arrsec, pretty=pretty)
                     if isinstance(arrsec, Section) else
-                    (",".join(tuple_to_section(sec, pretty=True) for sec in arrsec)
+                    (list(tuple_to_section(sec, pretty=True) for sec in arrsec)
                      if pretty else arrsec))
 
         return [tuple_to_section(asec, pretty=pretty)
                 if isinstance(asec, Section) else
-                (",".join(tuple_to_section(sec, pretty=True) for sec in asec)
+                (list(tuple_to_section(sec, pretty=True) for sec in asec)
                  if pretty else asec) for asec in arrsec]
 
     @astro_data_descriptor
