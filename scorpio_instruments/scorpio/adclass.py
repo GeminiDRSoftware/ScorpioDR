@@ -132,6 +132,29 @@ class AstroDataScorpio(AstroDataGemini):
     #    NODANDSHUFFLE, HIFREQ (High time resolution)
 
     @astro_data_descriptor
+    def amp_read_area(self):
+        """
+        Returns a list of amplifier read areas, one per amp, made by combining
+        the amplifier name and detector section (nested within a length-1 list
+        of extensions when called on the parent AstroData instance).
+
+        Returns
+        -------
+        list[Section|str] | list[list[Section|str]]
+            read_area of each extension
+        """
+        ampname = self.array_name()
+        arrsec = self.array_section(pretty=True)
+        # Combine the amp name(s) and detector section(s)
+        if self.is_single:
+            return ["'{}':{}".format(a, s) if a and s else None
+                    for a, s in zip(ampname, arrsec)]
+        else:
+            return [["'{}':{}".format(a, s) if a and s else None
+                     for a, s in zip(amps, secs)]
+                    for amps, secs in zip(ampname, arrsec)]
+
+    @astro_data_descriptor
     def array_name(self):
         """
         Returns the name for each amplifier array per extension. Because Scorpio

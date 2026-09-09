@@ -13,7 +13,7 @@ import scorpio_instruments
 
 SCORPIO_DESCRIPTORS_TYPES = [
     ('airmass', float),
-  # ('amp_read_area', [[str]]),
+    ('amp_read_area', [[str]]),
     ('ao_seeing', NoneType),
     ('array_name', [[str]]),
     ('array_section', [[Section]]),
