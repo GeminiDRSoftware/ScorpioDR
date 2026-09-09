@@ -6,7 +6,7 @@ from gemini_instruments.common import Section
 from . import lookup
 
 def tuple_to_section(sec, pretty=False):
-    return sec.asIRAFSection() if pretty else sec
+    return sec.asIRAFsection() if pretty else sec
 
 
 class AstroDataScorpio(AstroDataGemini):
