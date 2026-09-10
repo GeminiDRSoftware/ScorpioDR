@@ -28,8 +28,8 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('dec', float),
     ('decker', int | None),
     ('detector_name', str),
-    ('detector_roi_setting', str),
-  # ('detector_rois_requested', [Section]),  # or is it [[Section]]?
+  # ('detector_roi_setting', str),
+    ('detector_rois_requested', NoneType),  # not needed (would be [Section])?
     ('detector_section', [Section]),
   # ('detector_x_bin', int),
   # ('detector_y_bin', int),
