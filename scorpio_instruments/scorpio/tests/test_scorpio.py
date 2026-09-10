@@ -24,7 +24,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('central_wavelength', float),
     ('coadds', int),
     ('data_label', str),
-  # ('data_section', [Section]),  # shouldn't this return a list?
+    ('data_section', [Section]),  # descriptor converts DATSEC1-4 to 1 section
     ('dec', float),
     ('decker', int | None),
     ('detector_name', str),
