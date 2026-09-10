@@ -315,6 +315,29 @@ class AstroDataScorpio(AstroDataGemini):
         return [tuple_to_section(sec, pretty=pretty) for sec in sections]
 
     @astro_data_descriptor
+    def detector_roi_setting(self):
+        """
+        Returns the ROI setting.
+
+        Returns
+        -------
+        str
+            Name of the ROI setting used: "Full Frame" or "Window"
+            (or "Undefined" if not recognized).
+        """
+        roi_dict = lookup.ROI_settings
+        roi_settings = set()
+        for ext in self:
+            roi = ext.detector_section()
+            roi_setting = 'Undefined'
+            for s in roi_dict:
+                roi_tuple = (roi.y1, roi.y2, roi.x1, roi.x2)
+                if roi_tuple in roi_dict[s]:
+                    roi_setting = s
+            roi_settings.add(roi_setting)
+        return roi_settings.pop() if len(roi_settings)==1 else 'Undefined'
+
+    @astro_data_descriptor
     def detector_x_bin(self):
         """
         Returns the detector binning in the x-direction

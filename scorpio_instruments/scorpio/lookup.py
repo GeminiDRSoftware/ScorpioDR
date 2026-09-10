@@ -24,3 +24,23 @@ dispersions = {
     'H'   :  0.12745,
     'Ks'  : -0.17157,
 }
+
+# Associate ROI names with the standard ROIs sections
+# The ROIs here are given in unbinned pixels, in Python section format,
+# Format is: { "ROI Name" : (y1, y2, x1, x2) }, indexed from 0.
+ROI_settings = {
+    "Full Frame Imaging" : [
+        (1544, 2568, 1536, 2560),  # VIS
+        (512, 1536, 512, 1536),    # NIR
+    ],
+    "Full Frame Spectroscopy" : [
+        (1544, 2568, 0, 4096),     # VIS
+        (512, 1536, 4, 2044),      # NIR
+    ],
+    "Window Imaging" : [
+        (2002, 2110, 1536, 2560),  # VIS
+        (970, 1078, 512, 1536),    # NIR
+    ],
+    # The original "ConOps" doc also references high-speed spectroscopy, but
+    # that seems not to be included in the Section Descriptors doc.
+}
