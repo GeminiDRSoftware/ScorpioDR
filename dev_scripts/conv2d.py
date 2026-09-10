@@ -74,6 +74,8 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
                 pass
             ref_exth[f'GAIN{n}'] = 1.0
 
+    ref_exth['CCDSUM'] = '1 1'
+
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
     ref_phu['EXPTREQ'] = ref_exth['INTTREQ']
 
