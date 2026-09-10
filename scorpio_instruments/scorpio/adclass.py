@@ -228,6 +228,22 @@ class AstroDataScorpio(AstroDataGemini):
                  if pretty else asec) for asec in arrsec]
 
     @astro_data_descriptor
+    def camera(self, stripID=False, pretty=False):
+        """
+        Returns the name of the camera.
+
+        The 'stripID' & 'pretty' options currently have no effect, as SCORPIO
+        doesn't append a component ID anyway.
+
+        Returns
+        -------
+        str
+            The name of the camera (eg. 'g').
+
+        """
+        return self.channel()
+
+    @astro_data_descriptor
     @gmu.return_requested_units(input_units="um")
     def central_wavelength(self):
         """

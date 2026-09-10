@@ -19,7 +19,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('array_section', [[Section]]),
     ('azimuth', float),
     ('calibration_key', str),
-  # ('camera', str),
+    ('camera', str),
     ('cass_rotator_pa', float),
     ('central_wavelength', float),
     ('coadds', int),
