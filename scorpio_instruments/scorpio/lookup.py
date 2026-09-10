@@ -29,15 +29,13 @@ dispersions = {
 # The ROIs here are given in unbinned pixels, in Python section format,
 # Format is: { "ROI Name" : (y1, y2, x1, x2) }, indexed from 0.
 ROI_settings = {
-    "Full Frame Imaging" : [
-        (1544, 2568, 1536, 2560),  # VIS
-        (512, 1536, 512, 1536),    # NIR
+    "Full Frame" : [
+        (1544, 2568, 1536, 2560),  # VIS IMAGE
+        (512, 1536, 512, 1536),    # NIR IMAGE
+        (1544, 2568, 0, 4096),     # VIS SPECT
+        (512, 1536, 4, 2044),      # NIR SPECT
     ],
-    "Full Frame Spectroscopy" : [
-        (1544, 2568, 0, 4096),     # VIS
-        (512, 1536, 4, 2044),      # NIR
-    ],
-    "Window Imaging" : [
+    "Window" : [
         (2002, 2110, 1536, 2560),  # VIS
         (970, 1078, 512, 1536),    # NIR
     ],
