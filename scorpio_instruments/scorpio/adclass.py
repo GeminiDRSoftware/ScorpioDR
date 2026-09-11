@@ -431,16 +431,17 @@ class AstroDataScorpio(AstroDataGemini):
         Returns
         -------
         list/float
-            The dispersion(s) in nm/pixel
+            The dispersion(s) in m/pixel
         """
 
         chan = self.channel()
         dispersion = lookup.dispersions.get(chan)
+        xbin = self.detector_x_bin()
 
-        if dispersion is None:
-            return None
-
-        dispersion *= self.detector_x_bin()
+        if dispersion and xbin and 'SPECT' in self.tags:
+            dispersion *= xbin
+        else:
+            dispersion = None
 
         if not self.is_single:
             dispersion = [dispersion] * len(self)

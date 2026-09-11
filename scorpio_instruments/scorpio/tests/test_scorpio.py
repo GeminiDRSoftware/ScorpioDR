@@ -36,7 +36,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('detector_x_offset', float),
     ('detector_y_offset', float),
     ('disperser', str),
-  # ('dispersion', [float]),
+    ('dispersion', [float | None]),
     ('dispersion_axis', [int]),
   # ('effective_wavelength', float),
     ('elevation', float),
