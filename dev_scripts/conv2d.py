@@ -97,6 +97,9 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['GEMPRGID'] = 'G-2019B-1234-Q'
     ref_phu['OBSID'] = ref_phu['GEMPRGID'] + f'-{obsnum:04d}'
 
+    ref_phu['GRATING'] = 'OUT'
+    ref_phu['GRATID'] = 'NONE'
+
     sci_arr = dat['SCI'].data
     if len(sci_arr.shape) > 3:  # raw ccd
         sci_arr = sci_arr[:, 0, :, :]  # bin unit read group axis
