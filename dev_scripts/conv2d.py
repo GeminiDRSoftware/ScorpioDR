@@ -99,6 +99,7 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
 
     ref_phu['GRATING'] = 'OUT'
     ref_phu['GRATID'] = 'NONE'
+    ref_phu['SLITSIZE'] = 'None'
 
     sci_arr = dat['SCI'].data
     if len(sci_arr.shape) > 3:  # raw ccd

@@ -462,6 +462,28 @@ class AstroDataScorpio(AstroDataGemini):
         return 1
 
     @astro_data_descriptor
+    def focal_plane_mask(self, stripID=False, pretty=False):
+        """
+        Returns the name of the focal plane mask.
+
+        Parameters
+        ----------
+        stripID : bool
+            Doesn't actually do anything.
+        pretty : bool
+            Same as for stripID
+
+        Returns
+        -------
+        str
+            The name of the focal plane mask
+        """
+        # Does this need changing to incorporate both rails, like GNIRS,
+        # and/or strip component numbers?
+        mask = self.slit()
+        return 'Imaging' if mask == 'None' else mask  # same convention as GMOS
+
+    @astro_data_descriptor
     def gain(self):
         """
         Returns the gain (electrons/ADU) for each amplifier in each extension. 

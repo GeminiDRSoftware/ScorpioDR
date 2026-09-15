@@ -38,11 +38,11 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('disperser', str),
     ('dispersion', [float | None]),
     ('dispersion_axis', [int]),
-  # ('effective_wavelength', float),
+  # ('effective_wavelength', float),  # need filter_name working first
     ('elevation', float),
     ('exposure_time', float),
   # ('filter_name', str),
-  # ('focal_plane_mask', str),
+    ('focal_plane_mask', str),
     ('gain', [[float]]),
   # ('gain_setting', str),
     ('gcal_lamp', str | None),
@@ -82,7 +82,8 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('requested_wv', int),
     ('saturation_level', int | float),  # should we enforce a list?
   # ('shuffle_pixels', int),  # currently undefined except for GMOS
-  # ('slit', str),
+    ('slit', str),
+    ('slit_width', float | None),
     ('target_dec', float),
     ('target_ra', float),
     ('telescope', str),
