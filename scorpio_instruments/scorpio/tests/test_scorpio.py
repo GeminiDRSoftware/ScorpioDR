@@ -44,13 +44,13 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('filter_name', str),
     ('focal_plane_mask', str),
     ('gain', [[float]]),
-  # ('gain_setting', str),
+  # ('gain_setting', str),  # needs clarification
     ('gcal_lamp', str | None),
     ('group_id', str),
     ('instrument', str),
     ('is_ao', bool),
     ('is_coadds_summed', bool),
-  # ('local_time', dt.time),
+    ('local_time', dt.time),
   # ('lyot_stop', str),
     ('mdf_row_id', int | None),
   # ('nod_count', [int]),      # } currently undefined except for GMOS
