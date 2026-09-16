@@ -51,7 +51,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('is_ao', bool),
     ('is_coadds_summed', bool),
     ('local_time', dt.time),
-  # ('lyot_stop', str),
+    ('lyot_stop', NoneType),
     ('mdf_row_id', int | None),
   # ('nod_count', [int]),      # } currently undefined except for GMOS
   # ('nod_offsets', [float]),  # }
