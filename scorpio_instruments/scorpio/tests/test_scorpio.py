@@ -60,7 +60,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('non_linear_level', int | float),  # should this be a len-1 list?
     ('object', str),
     ('observation_class', str),
-  # ('observation_epoch', float),
+    ('observation_epoch', float),
     ('observation_id', str),
     ('observation_type', str),
   # ('overscan_section', [Section]),  # returns a dict; currently unsupported
