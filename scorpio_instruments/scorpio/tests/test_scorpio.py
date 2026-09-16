@@ -96,7 +96,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('wavelength_band', str | None),
     ('wcs_dec', float),
     ('wcs_ra', float),
-  # ('well_depth_setting', str),
+    ('well_depth_setting', str | None),
 ]
 
 test_files = [
