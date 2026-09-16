@@ -93,7 +93,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('ut_datetime', dt.datetime),
     ('ut_time', dt.time),
     ('wavefront_sensor', str | None),
-  # ('wavelength_band', str),
+    ('wavelength_band', str | None),
     ('wcs_dec', float),
     ('wcs_ra', float),
   # ('well_depth_setting', str),
