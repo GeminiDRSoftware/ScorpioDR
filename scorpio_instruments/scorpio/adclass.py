@@ -676,7 +676,8 @@ class AstroDataScorpio(AstroDataGemini):
     @astro_data_descriptor
     def saturation_level(self):
         # temporary value for testing dragons compatibility before real data
-        return 65535
+        level= 65535
+        return level if self.is_single else [level for ext in self]
 
     @astro_data_descriptor
     def slit_width(self):

@@ -57,7 +57,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('nod_offsets', [float]),  # }
     ('nominal_atmospheric_extinction', float),
   # ('nominal_photometric_zeropoint', [float]),  # needs filter_name & LUTs
-    ('non_linear_level', int | float),  # should this be a len-1 list?
+    ('non_linear_level', [int | float]),
     ('object', str),
     ('observation_class', str),
     ('observation_epoch', float),
@@ -80,7 +80,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('requested_cc', int),
     ('requested_iq', int),
     ('requested_wv', int),
-    ('saturation_level', int | float),  # should we enforce a list?
+    ('saturation_level', [int | float]),
   # ('shuffle_pixels', int),  # currently undefined except for GMOS
     ('slit', str),
     ('slit_width', float | None),
