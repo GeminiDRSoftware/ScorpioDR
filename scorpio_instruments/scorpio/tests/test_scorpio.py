@@ -56,7 +56,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('nod_count', [int]),      # } currently undefined except for GMOS
   # ('nod_offsets', [float]),  # }
     ('nominal_atmospheric_extinction', float),
-  # ('nominal_photometric_zeropoint', [float]),
+  # ('nominal_photometric_zeropoint', [float]),  # needs filter_name & LUTs
     ('non_linear_level', int | float),  # should this be a len-1 list?
     ('object', str),
     ('observation_class', str),

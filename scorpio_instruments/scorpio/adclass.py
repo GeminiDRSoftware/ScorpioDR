@@ -1,3 +1,5 @@
+import math
+
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
 from gemini_instruments.gemini import AstroDataGemini, get_specphot_name
@@ -515,6 +517,50 @@ class AstroDataScorpio(AstroDataGemini):
             return values[0]
         else:
             return values
+
+    @astro_data_descriptor
+    def nominal_photometric_zeropoint(self):
+        """
+        Returns the nominal zeropoints (i.e., the magnitude corresponding to
+        a pixel value of 1) for the extensions in an AD object.
+        Zeropoints in table are for electrons, so subtract 2.5*log10(avg_gain)
+        if the data are in ADU.
+
+        Returns
+        -------
+        float/list
+            zeropoint values, one per SCI extension
+        """
+
+        def _zpt(ext):
+            det = ext.detector_name()
+            try:
+                zpt = lookup.nominal_zeropoints[
+                    (det, ext.filter_name())  # allow exact component match
+                ]
+            except KeyError:
+                zpt = lookup.nominal_zeropoints.get(
+                    (det, ext.filter_name(pretty=True))
+                )
+
+            in_adu = ext.is_in_adu()
+            gain = ext.gain()
+
+            try:
+                # Just use average gain across the quadrants if we still have
+                # ADU; we'll get a slightly more accurate value at the final
+                # pass with fully-reduced data:
+                return zpt - (
+                    2.5 * math.log10(math.fsum(gain)/len(gain))
+                    if in_adu else 0
+                )
+            except (TypeError, ZeroDivisionError):
+                return None
+
+        if self.is_single:
+            return _zpt(self)
+        else:
+            return [_zpt(ext) for ext in self]
 
     @astro_data_descriptor
     def non_linear_level(self):

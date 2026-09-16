@@ -25,6 +25,11 @@ dispersions = {
     'Ks'  : -0.17157,
 }
 
+nominal_zeropoints = {
+  # Placeholder entry -- actual detector identifiers & zero points TBC:
+  ('SCORPIO + e2v_CCD231-84_g_ss_astro-multi-2', 'g') : 29.0,
+}
+
 # Associate ROI names with the standard ROIs sections
 # The ROIs here are given in unbinned pixels, in Python section format,
 # Format is: { "ROI Name" : (y1, y2, x1, x2) }, indexed from 0.
