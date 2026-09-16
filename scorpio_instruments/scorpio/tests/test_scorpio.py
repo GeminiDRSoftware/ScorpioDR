@@ -63,7 +63,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('observation_epoch', float),
     ('observation_id', str),
     ('observation_type', str),
-  # ('overscan_section', [Section]),  # returns a dict; currently unsupported
+    ('overscan_section', dict),  # checking types in dict currently unsupported
     ('pixel_scale', float),
     ('program_id', str),
     ('pupil_mask', NoneType),
