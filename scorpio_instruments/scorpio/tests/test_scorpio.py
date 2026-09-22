@@ -38,7 +38,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('disperser', str),
     ('dispersion', [float | None]),
     ('dispersion_axis', [int]),
-  # ('effective_wavelength', float),  # need filter_name working first
+    ('effective_wavelength', float | None),
     ('elevation', float),
     ('exposure_time', float),
     ('filter_name', str),
@@ -56,7 +56,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('nod_count', [int]),      # } currently undefined except for GMOS
   # ('nod_offsets', [float]),  # }
     ('nominal_atmospheric_extinction', float),
-  # ('nominal_photometric_zeropoint', [float]),  # needs filter_name & LUTs
+  # ('nominal_photometric_zeropoint', [float]),  # needs LUT completing
     ('non_linear_level', [int | float]),
     ('object', str),
     ('observation_class', str),
