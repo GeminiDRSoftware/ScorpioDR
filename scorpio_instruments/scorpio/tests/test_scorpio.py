@@ -44,7 +44,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('filter_name', str),
     ('focal_plane_mask', str),
     ('gain', [[float]]),
-  # ('gain_setting', str),  # needs clarification
+    ('gain_setting', str),
     ('gcal_lamp', str | None),
     ('group_id', str),
     ('instrument', str),

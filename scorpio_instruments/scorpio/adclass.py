@@ -519,6 +519,19 @@ class AstroDataScorpio(AstroDataGemini):
             return values
 
     @astro_data_descriptor
+    def gain_setting(self):
+        """
+        Returns the gain setting of the observation (which is fixed for
+        SCORPIO).
+
+        Returns
+        -------
+        str
+            Gain setting
+        """
+        return 'Standard'
+
+    @astro_data_descriptor
     def nominal_photometric_zeropoint(self):
         """
         Returns the nominal zeropoints (i.e., the magnitude corresponding to
