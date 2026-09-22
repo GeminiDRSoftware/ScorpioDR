@@ -99,6 +99,7 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
 
     ref_phu['GRATING'] = 'OUT'
     ref_phu['GRATID'] = 'NONE'
+    ref_phu['RDMODE'] = 0
     ref_phu['SLITSIZE'] = 'None'
     ref_phu['LT'] = '22:00:00.0'
     ref_phu['OBSEPOCH'] = 2023.83

@@ -73,9 +73,9 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('raw_cc', int | None),  # } can be 'UNKNOWN' if not set -> None
     ('raw_iq', int | None),  # }
     ('raw_wv', int | None),  # }
-  # ('read_mode', str),
+    ('read_mode', str),
     ('read_noise', [[float]]),
-  # ('read_speed_setting', str),
+    ('read_speed_setting', str),
     ('requested_bg', int),
     ('requested_cc', int),
     ('requested_iq', int),

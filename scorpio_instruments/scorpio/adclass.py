@@ -601,6 +601,25 @@ class AstroDataScorpio(AstroDataGemini):
             return overscan_dict
 
     @astro_data_descriptor
+    def read_mode(self):
+        """
+        Returns a string describing the readout mode, which sets the
+        readout speed
+
+        Returns
+        -------
+        str
+            read mode used
+        """
+        read_mode = self.phu.get('RDMODE')
+        if read_mode == 0:
+            return 'Standard'
+        elif read_mode == 1:
+            return 'Fast'
+        else:
+            return None
+
+    @astro_data_descriptor
     def read_noise(self):
         """
         Returns the read noise (electrons) for each amplifier in each extension. 
@@ -630,6 +649,20 @@ class AstroDataScorpio(AstroDataGemini):
             return values
         else:
             return [values]
+
+    @astro_data_descriptor
+    def read_speed_setting(self):
+        """
+        Returns the setting for the readout speed (Standard or Fast)
+
+        Returns
+        -------
+        str
+            the setting for the readout speed
+        """
+        # The gain setting is fixed for SCORPIO and we derive the read speed
+        # from the read mode because that's how it's defined in the headers.
+        return self.read_mode()
 
     @astro_data_descriptor
     def refpix_section(self, pretty=False):
