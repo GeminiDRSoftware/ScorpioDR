@@ -97,6 +97,8 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['GEMPRGID'] = 'G-2019B-1234-Q'
     ref_phu['OBSID'] = ref_phu['GEMPRGID'] + f'-{obsnum:04d}'
 
+    ref_phu['FILTER'] = 'i_G1303' if arm == 'vis' else 'H_G1307'
+    ref_phu['FILTID'] = 'NONE'
     ref_phu['GRATING'] = 'OUT'
     ref_phu['GRATID'] = 'NONE'
     ref_phu['RDMODE'] = 0

@@ -22,6 +22,7 @@ class AstroDataScorpio(AstroDataGemini):
                           data_section='DATSEC',
                           detector_name='DETECTOR',
                           disperser='GRATING',
+                          filter='FILTER',
                           read_noise='RDNOIS',
                           slit='SLITSIZE',
                           )
@@ -436,6 +437,28 @@ class AstroDataScorpio(AstroDataGemini):
             Dispersion axis.
        """
         return 1
+
+    @astro_data_descriptor
+    def filter_name(self, stripID=False, pretty=False, keepID=False):
+        """
+        Returns the name of the filter(s) used.  The component ID can be
+        removed with either 'stripID' or 'pretty'.
+
+        Parameters
+        ----------
+        stripID : bool
+            If True, removes the component ID and returns only the name of
+            the filter.
+        pretty : bool
+            Same as for stripID.  Pretty here does not do anything more.
+
+        Returns
+        -------
+        str
+            The name of the filter with or without the component ID.
+        """
+        return self._may_remove_component(self._keyword_for('filter'),
+                                          stripID, pretty)
 
     @astro_data_descriptor
     def focal_plane_mask(self, stripID=False, pretty=False):

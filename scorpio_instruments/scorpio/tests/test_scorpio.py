@@ -41,7 +41,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
   # ('effective_wavelength', float),  # need filter_name working first
     ('elevation', float),
     ('exposure_time', float),
-  # ('filter_name', str),
+    ('filter_name', str),
     ('focal_plane_mask', str),
     ('gain', [[float]]),
     ('gain_setting', str),
