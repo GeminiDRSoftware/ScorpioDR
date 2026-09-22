@@ -21,6 +21,7 @@ class AstroDataScorpio(AstroDataGemini):
                           dark_section='UNILSEC',
                           data_section='DATSEC',
                           detector_name='DETECTOR',
+                          disperser='GRATING',
                           read_noise='RDNOIS',
                           slit='SLITSIZE',
                           )
@@ -394,33 +395,6 @@ class AstroDataScorpio(AstroDataGemini):
                 ybin_list = [1 for ext in self]
             # Check list is single-valued
             return ybin_list[0] if ybin_list[1:] == ybin_list[:-1] else None
-
-    @astro_data_descriptor
-    def disperser(self, stripID=False, pretty=False):
-        """
-        Returns the name of the disperser (for SCORPIO, a grating) used in the
-        applicable channel.
-
-        Parameters
-        ----------
-        stripID : bool
-            If True, removes the component ID and returns only the name of
-            the disperser.
-        pretty : bool
-            Does the same as stripID for SCORPIO.
-
-        Returns
-        -------
-        str
-            name of the grating
-        """
-        stripID |= pretty
-        disperser = self.phu.get('GRATING') or None  # disallow empty string
-        component = str(self.phu.get('GRATID') or 'NONE')  # could be int code
-        if disperser and not stripID and component.upper() != 'NONE':
-            disperser += f'_{component}'
-
-        return disperser
 
     @astro_data_descriptor
     @gmu.return_requested_units()
