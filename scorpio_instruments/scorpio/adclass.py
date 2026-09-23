@@ -116,6 +116,11 @@ class AstroDataScorpio(AstroDataGemini):
             return TagSet(['LS'])
 
     @astro_data_tag
+    def _tag_nodandshift(self):
+        if self.phu.get('NODMODE', '').lower() == 'yes':
+            return TagSet(['NODANDSHIFT'])
+
+    @astro_data_tag
     def _flat_type(self):
         bun = self.phu.get('BUNDLE')
         obj = self.phu.get('OBJECT', '').upper()
@@ -529,6 +534,45 @@ class AstroDataScorpio(AstroDataGemini):
         return 'Standard'
 
     @astro_data_descriptor
+    def nod_count(self):
+        """
+        Returns a tuple with the number of integrations made in each
+        of the nod-and-shift positions
+
+        Returns
+        -------
+        tuple of int
+            number of integrations in the A and B positions
+        """
+        try:
+            return (int(self.phu['ANODCNT']), int(self.phu['BNODCNT']))
+        except KeyError:
+            return None
+
+    @astro_data_descriptor
+    def nod_offsets(self):
+        """
+        Returns a tuple with the offsets from the default telescope position
+        of the A and B nod-and-shift positions (in arcseconds)
+
+        Returns
+        -------
+        tuple of float
+            offsets in arcseconds
+        """
+        try:
+            ayoff = float(self.phu['NODAYOFF'])
+            byoff = float(self.phu['NODBYOFF'])
+            inport = self.phu['INPORT']
+        except KeyError:
+            return None
+
+        if inport == 1:
+            ayoff, byoff = -ayoff, -byoff  # TBC for SCORPIO IAA/detectors
+
+        return (ayoff, byoff)
+
+    @astro_data_descriptor
     def nominal_photometric_zeropoint(self):
         """
         Returns the nominal zeropoints (i.e., the magnitude corresponding to
@@ -721,6 +765,21 @@ class AstroDataScorpio(AstroDataGemini):
         # temporary value for testing dragons compatibility before real data
         level= 65535
         return level if self.is_single else [level for ext in self]
+
+    @astro_data_descriptor
+    def shuffle_pixels(self):
+        """
+        Returns the number of rows that the charge has been shuffled, in
+        nod-and-shift data
+
+        Returns
+        -------
+        int
+            The number of rows by which the charge is shuffled
+        """
+        nodpix = self.phu.get('NODPIX')
+        if 'NODANDSHIFT' in self.tags and nodpix is not None:
+            return int(nodpix)  # Draft GDS config defines a string...
 
     @astro_data_descriptor
     def slit_width(self):

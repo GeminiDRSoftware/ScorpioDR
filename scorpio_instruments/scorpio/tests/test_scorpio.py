@@ -53,8 +53,8 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('local_time', dt.time),
     ('lyot_stop', NoneType),
     ('mdf_row_id', int | None),
-  # ('nod_count', [int]),      # } currently undefined except for GMOS
-  # ('nod_offsets', [float]),  # }
+    ('nod_count', NoneType),    # should be [int] when present (add test?)
+    ('nod_offsets', NoneType),  # should be [float] when present (add test?)
     ('nominal_atmospheric_extinction', float),
   # ('nominal_photometric_zeropoint', [float]),  # needs LUT completing
     ('non_linear_level', [int | float]),
@@ -81,7 +81,7 @@ SCORPIO_DESCRIPTORS_TYPES = [
     ('requested_iq', int),
     ('requested_wv', int),
     ('saturation_level', [int | float]),
-  # ('shuffle_pixels', int),  # currently undefined except for GMOS
+    ('shuffle_pixels', NoneType),  # should be int when present (add test?)
     ('slit', str),
     ('slit_width', float | None),
     ('target_dec', float),
