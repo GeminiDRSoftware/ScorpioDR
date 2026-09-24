@@ -3,7 +3,7 @@ import math
 from astrodata import astro_data_tag, astro_data_descriptor, returns_list, TagSet
 from gemini_instruments import gmu
 from gemini_instruments.gemini import AstroDataGemini, get_specphot_name
-from gemini_instruments.common import Section
+from gemini_instruments.common import Section, build_group_id
 
 from . import lookup
 
@@ -532,6 +532,60 @@ class AstroDataScorpio(AstroDataGemini):
             Gain setting
         """
         return 'Standard'
+
+    @astro_data_descriptor
+    def group_id(self):
+        """
+        Returns a string representing a group of data that are compatible
+        with each other. This is used when stacking, for example.
+
+        SCORPIO uses the detector binning, amp_read_area and
+        read_speed_setting. Data other than biases & darks have the pretty
+        version of the filter name included, while darks have the exposure
+        time. Spectroscopic data have the grism and slit. Nod-and-shift cals
+        have the charge shuffling parameters. Science data & standards include
+        the observation_id.
+
+        Returns
+        -------
+        str
+            A group ID for compatible data.
+        """
+        tags = self.tags
+
+        # Things needed for all observations
+        id_descriptor_list_all = ['detector_x_bin', 'detector_y_bin',
+                                  'read_mode', 'amp_read_area']
+
+        if 'BIAS' in tags:
+            id_descriptor_list = []
+        elif 'DARK' in tags:
+            id_descriptor_list = ['exposure_time']
+        else:
+            if 'STANDARD' in tags or 'CAL' not in tags:
+                id_descriptor_list = ['observation_id', 'filter_name']
+            else:
+                id_descriptor_list = ['filter_name']
+
+            # Matching disperser as well as filter is redundant for SCORPIO,
+            # but would be needed if matching components without "pretty":
+            if 'SPECT' in tags:
+                id_descriptor_list.extend(['disperser', 'focal_plane_mask'])
+
+        # Match charge shuffling parameters for cals, since they get stacked
+        # early on and this will affect the pixel flat & charge smearing.
+        # Science data usually get stacked later on and we can just match their
+        # OBSID, allowing stacking of irregular nod sequences if that's what
+        # the PI indended (note that GMOS doesn't account for N&S at all here).
+        if 'NODANDSHIFT' in tags and 'CAL' in tags and not 'STANDARD' in tags:
+            id_descriptor_list.extend(['shuffle_pixels', 'nod_count'])
+
+        # Add in all of the common descriptors required
+        id_descriptor_list.extend(id_descriptor_list_all)
+
+        return build_group_id(self, id_descriptor_list,
+                              prettify=['filter_name', 'disperser'],  # why?
+                              additional=None)
 
     @astro_data_descriptor
     def nod_count(self):
