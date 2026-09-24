@@ -45,10 +45,12 @@ class AstroDataScorpio(AstroDataGemini):
     #    else:
     #        return TagSet(blocks=['BUNDLE'])
 
-    def _tag_is_spect(self):
-        # Should this look at the grating, or just OBSMODE (as for the tag)?
+    def _tag_image_or_spect(self):
         mode = self.phu.get(self._keyword_for('observation_mode'), '').upper()
-        return mode == 'SPECT'
+        if mode.startswith('IM'):
+            return 'IMAGE'
+        elif mode.startswith('SPEC') or mode == 'N&S':
+            return 'SPECT'
 
     def _tag_is_ccd(self):
         #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
@@ -90,7 +92,7 @@ class AstroDataScorpio(AstroDataGemini):
     @astro_data_tag
     def _tag_standard(self):
         if (
-            self._tag_is_spect() and
+            self._tag_image_or_spect() == 'SPECT' and
             self.phu.get('OBSTYPE') == 'OBJECT' and
             self.phu.get('OBSCLASS') in ('partnerCal', 'nightCal') and
             (self._tag_is_nir() or get_specphot_name(self))
@@ -106,6 +108,14 @@ class AstroDataScorpio(AstroDataGemini):
     def _tag_nir(self):
         if self._tag_is_nir():
             return TagSet(['NIR'], blocks=['CCD'])
+
+    @astro_data_tag
+    def _type_mode(self):  # overrides the like-named gemini tag method
+        modes = {'IMAGE', 'SPECT'}
+        mode = self._tag_image_or_spect()
+        if mode in modes:
+            other = list(modes - {mode})
+            return TagSet([mode], blocks=other)
 
     @astro_data_tag
     def _tag_ls(self):
