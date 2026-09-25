@@ -91,6 +91,17 @@ class AstroDataScorpio(AstroDataGemini):
             return TagSet(['STANDARD', 'CAL'])
 
     @astro_data_tag
+    def _tag_twilight(self):
+        if self.phu.get('OBJECT', '').upper() == 'TWILIGHT':
+            # Twilight flats are of OBSTYPE == OBJECT, meaning that the generic
+            # FLAT tag won't be triggered. Add it explicitly
+            return TagSet(
+                ['TWILIGHT', 'CAL',
+                 'SLITILLUM' if self._tag_image_or_spect() == 'SPECT' else
+                 'FLAT']
+            )
+
+    @astro_data_tag
     def _tag_ccd(self):
         if self._tag_is_ccd():
             return TagSet(['CCD'], blocks=['NIR'])
