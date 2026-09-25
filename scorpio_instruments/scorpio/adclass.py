@@ -137,6 +137,10 @@ class AstroDataScorpio(AstroDataGemini):
         if self.phu.get('NODMODE', '').lower() == 'yes':
             return TagSet(['NODANDSHIFT'])
 
+    @astro_data_tag
+    def _tag_thruslit(self):
+        return TagSet(['THRUSLIT'], if_present=['IMAGE', 'LS'])
+
     # More tags needs to be added by the Scorpio DR team
     # At this time, Gemini DR expects the following tags to be implemented.
     #    IMAGING, LS (for longslit), BUNDLE, FLAT, TWILIGHT, GCALFLAT.
