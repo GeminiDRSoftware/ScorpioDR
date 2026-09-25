@@ -81,6 +81,11 @@ class AstroDataScorpio(AstroDataGemini):
             return TagSet(['FLAT', 'CAL'])
 
     @astro_data_tag
+    def _type_gcal_lamp(self):  # overrides the like-named gemini tag method
+        if self._tag_is_nir():
+            return super()._type_gcal_lamp()  # LAMPON/OFF
+
+    @astro_data_tag
     def _tag_standard(self):
         if (
             self._tag_image_or_spect() == 'SPECT' and
@@ -131,15 +136,6 @@ class AstroDataScorpio(AstroDataGemini):
     def _tag_nodandshift(self):
         if self.phu.get('NODMODE', '').lower() == 'yes':
             return TagSet(['NODANDSHIFT'])
-
-    @astro_data_tag
-    def _flat_type(self):
-        obj = self.phu.get('OBJECT', '').upper()
-        shut = self.phu.get('GCALSHUT', '').upper()
-        if obj == 'GCALFLAT' and shut == 'OPEN':
-            return TagSet(['LAMPON']) #, 'NIR'], blocks=['CCD'])
-        if obj == 'GCALFLAT' and shut == 'CLOSED':
-            return TagSet(['LAMPOFF']) #, 'NIR'], blocks=['CCD'])
 
     # More tags needs to be added by the Scorpio DR team
     # At this time, Gemini DR expects the following tags to be implemented.
