@@ -38,13 +38,6 @@ class AstroDataScorpio(AstroDataGemini):
     def _tag_instrument(self):
         return TagSet(['SCORPIO'])
 
-    #@astro_data_tag
-    #def _is_bundle(self):
-    #    if self.phu.get('BUNDLE') == 'T':
-    #        return TagSet(['BUNDLE'])
-    #    else:
-    #        return TagSet(blocks=['BUNDLE'])
-
     def _tag_image_or_spect(self):
         mode = self.phu.get(self._keyword_for('observation_mode'), '').upper()
         if mode.startswith('IM'):
@@ -53,11 +46,9 @@ class AstroDataScorpio(AstroDataGemini):
             return 'SPECT'
 
     def _tag_is_ccd(self):
-        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['G','R','I','Z']):
         return self.phu.get('CHANNEL', '').upper() in ['G','R','I','Z']
 
     def _tag_is_nir(self):
-        #if (self.phu.get('BUNDLE') == 'F') and (self.phu.get('CHANNEL').upper() in ['Y','J','H','K']):
         return self.phu.get('CHANNEL', '').upper() in ['Y','J','H','K']
 
     def _tag_is_bias(self):
@@ -132,13 +123,10 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_tag
     def _flat_type(self):
-        bun = self.phu.get('BUNDLE')
         obj = self.phu.get('OBJECT', '').upper()
         shut = self.phu.get('GCALSHUT', '').upper()
-        #if bun == 'F' and obj == 'GCALFLAT' and shut == 'OPEN':
         if obj == 'GCALFLAT' and shut == 'OPEN':
             return TagSet(['LAMPON']) #, 'NIR'], blocks=['CCD'])
-        #if bun == 'F' and obj == 'GCALFLAT' and shut == 'CLOSED':
         if obj == 'GCALFLAT' and shut == 'CLOSED':
             return TagSet(['LAMPOFF']) #, 'NIR'], blocks=['CCD'])
 
@@ -285,12 +273,11 @@ class AstroDataScorpio(AstroDataGemini):
     @astro_data_descriptor
     def channel(self):
         """
-        Returns the channel name. Returns a string if the Scorpio file is 
-        de-bundled or a list if the Scorpio file is a bundle.
+        Returns the channel name.
 
         Returns
         -------
-        list of string/string
+        string
             Channel color band.
         """
         return self.phu.get('CHANNEL')
