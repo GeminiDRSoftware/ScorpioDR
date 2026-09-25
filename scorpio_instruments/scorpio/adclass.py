@@ -46,10 +46,10 @@ class AstroDataScorpio(AstroDataGemini):
             return 'SPECT'
 
     def _tag_is_ccd(self):
-        return self.phu.get('CHANNEL', '').upper() in ['G','R','I','Z']
+        return self.phu.get('CHANNEL', '') in ['g','r','i','z']
 
     def _tag_is_nir(self):
-        return self.phu.get('CHANNEL', '').upper() in ['Y','J','H','K']
+        return self.phu.get('CHANNEL', '') in ['Y','J','H','Ks']
 
     def _tag_is_bias(self):
         return self.phu.get('OBSTYPE') == 'BIAS'
