@@ -680,8 +680,13 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def non_linear_level(self):
-        # temporary value for testing dragons compatibility before real data
-        return self.saturation_level()
+        # Try NONLINEA first (added by prepare if necessary), then NONLINn if
+        # raw data have separate values for each amp, falling back to the same
+        # value as saturation_level if there's no keyword at all.
+        return self._hdr_level(
+            self._keyword_for('non_linear_level'), 'NONLIN',
+            defvals=self.saturation_level()
+        )
 
     @astro_data_descriptor
     def overscan_section(self, pretty=False):
@@ -824,9 +829,12 @@ class AstroDataScorpio(AstroDataGemini):
 
     @astro_data_descriptor
     def saturation_level(self):
-        # temporary value for testing dragons compatibility before real data
-        level= 65535
-        return level if self.is_single else [level for ext in self]
+        # Try SATLEVEL first (added by prepare if necessary), then SATLEVn if
+        # raw data have separate values for each amp, falling back to default
+        # of 2^16-1 for the ADC if there's no keyword at all.
+        return self._hdr_level(
+            self._keyword_for('saturation_level'), 'SATLEV', defvals=65535
+        )
 
     @astro_data_descriptor
     def shuffle_pixels(self):
@@ -878,3 +886,34 @@ class AstroDataScorpio(AstroDataGemini):
         return [[sec[i] for sec in sections if sec[i] is not None]
                 for i in range(len(self))]
 
+    def _hdr_level(self, defkw, ampkw, defvals=None):
+        try:
+            # Got a list of fallback vals per ext (from another descriptor)?
+            iter(defvals)
+            if isinstance(defvals, (str, bytes)):
+                raise TypeError
+        except TypeError:
+            # Otherwise replicate single fallback value:
+            defvals = [defvals] * len(self)
+
+        values = []
+
+        for ext, defval in zip(self, defvals):
+            level = 0.
+            try:
+                level = ext.hdr[defkw]
+            except KeyError:
+                # If the instrument has written a separate value for each amp,
+                # average them to produce the single value expected by DRAGONS.
+                for amp in range(1, 100):
+                    value = ext.hdr.get(f'{ampkw}{amp}')
+                    if value is None:
+                        break
+                    level += float(value)
+                if amp > 1:
+                    level /= (amp-1)
+                else:
+                    level = defval
+            values.append(level)
+
+        return values[0] if self.is_single else values
