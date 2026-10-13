@@ -16,8 +16,8 @@ class AstroDataScorpio(AstroDataGemini):
     # single keyword mapping. add only the ones that are different
     # from what's already defined in AstroDataGemini.
 
-    __keyword_dict = dict(array_name='ARRNAM',
-                          array_section='ARRSEC',
+    __keyword_dict = dict(array_name='AMPNAM',
+                          array_section='CCDSEC',
                           dark_section='UNILSEC',
                           data_section='DATSEC',
                           detector_name='DETECTOR',
@@ -710,13 +710,13 @@ class AstroDataScorpio(AstroDataGemini):
         dict
         """
         try:
-            overscan_dict = {'serial': self._build_section_lists('OVRSECS', pretty=pretty)}
+            overscan_dict = {'serial': self._build_section_lists('BIASECS', pretty=pretty)}
         except KeyError:
             # Something for IR arrays?
             return None if self.is_single else [None] * len(self)
         else:
             try:
-                overscan_dict['parallel'] = self._build_section_lists('OVRSECP', pretty=pretty)
+                overscan_dict['parallel'] = self._build_section_lists('BIASECP', pretty=pretty)
             except KeyError:
                 pass
             return overscan_dict

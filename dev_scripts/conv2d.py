@@ -74,6 +74,21 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
                 pass
             ref_exth[f'GAIN{n}'] = 1.0
 
+    for oldname, newname in (
+        ('OVRSECS', 'BIASECS'),
+        ('OVRSECP', 'BIASECP'),
+        ('ARRSEC', 'CCDSEC'),
+        ('ARRNAM', 'AMPNAM'),
+    ):
+        for n in range(1,17):
+            oldkw, newkw = f'{oldname}{n}', f'{newname}{n}'
+            if oldkw in ref_exth:
+                if newkw not in ref_exth:
+                    ref_exth[newkw] = (
+                        ref_exth[oldkw], ref_exth.comments[oldkw]
+                    )
+                del ref_exth[oldkw]
+
     ref_exth['CCDSUM'] = '1 1'
 
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
