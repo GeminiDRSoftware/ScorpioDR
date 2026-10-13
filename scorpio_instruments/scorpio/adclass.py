@@ -490,10 +490,18 @@ class AstroDataScorpio(AstroDataGemini):
         str
             The name of the focal plane mask
         """
-        # Does this need changing to incorporate both rails, like GNIRS,
-        # and/or strip component numbers?
+        # The pinhole is another mask that can go in the focal plane, on the
+        # same rail as the slits; only one or the other can be in the beam:
+        if self.phu.get('RAIL1', '').upper() == 'PINHOLE':
+            return 'Pinhole'
+        # Follow GMOS convention of returning either a slit name or 'Imaging'.
+        # Both SLITSIZE=='ERROR' & missing keyword imply unknown pos -> None.
         mask = self.slit()
-        return 'Imaging' if mask == 'None' else mask  # same convention as GMOS
+        if not mask or mask.upper().startswith('ERR'):
+            return None
+        if mask.upper() == 'NONE':
+            return 'Imaging'
+        return mask
 
     @astro_data_descriptor
     def gain(self):
