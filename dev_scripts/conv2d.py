@@ -110,6 +110,7 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     except KeyError:
         pass
     ref_phu['GEMPRGID'] = 'G-2019B-1234-Q'
+    ref_phu['OBSMODE'] = 'IMG'
     ref_phu['OBSID'] = ref_phu['GEMPRGID'] + f'-{obsnum:04d}'
 
     ref_phu['FILTER'] = 'i_G1303' if arm == 'vis' else 'H_G1307'
