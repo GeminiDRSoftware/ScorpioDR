@@ -74,12 +74,21 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
                 pass
             ref_exth[f'GAIN{n}'] = 1.0
 
-    for oldname, newname in (
-        ('OVRSECS', 'BIASECS'),
-        ('OVRSECP', 'BIASECP'),
-        ('ARRSEC', 'CCDSEC'),
-        ('ARRNAM', 'AMPNAM'),
-    ):
+    if arm == 'vis':
+        det_kw_updates = (
+            ('OVRSECS', 'BIASECS'),
+            ('OVRSECP', 'BIASECP'),
+            ('ARRSEC', 'CCDSEC'),
+            ('ARRNAM', 'AMPNAM'),
+        )
+        ref_exth['CCDSUM'] = '1 1'
+    else:
+        # These are TBC for NIR data:
+        det_kw_updates = (
+            ('ARRNAM', 'AMPNAM'),
+        )
+
+    for oldname, newname in (det_kw_updates):
         for n in range(1,17):
             oldkw, newkw = f'{oldname}{n}', f'{newname}{n}'
             if oldkw in ref_exth:
@@ -88,8 +97,6 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
                         ref_exth[oldkw], ref_exth.comments[oldkw]
                     )
                 del ref_exth[oldkw]
-
-    ref_exth['CCDSUM'] = '1 1'
 
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
     ref_phu['EXPTREQ'] = ref_exth['INTTREQ']
