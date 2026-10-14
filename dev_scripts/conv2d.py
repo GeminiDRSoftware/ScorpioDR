@@ -75,13 +75,18 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
             ref_exth[f'GAIN{n}'] = 1.0
 
     if arm == 'vis':
+        ref_phu['CONID'] = 'TBD'
+        ref_phu['DETECTOR'] = 'e2v_CCD231-84'
+        ref_phu['DETID'] = 'TBD'  # Just need it to exist for now
+        ref_phu['DETTYPE'] = 'e2v_CCD231-84_astro-multi-2_dd'
+        ref_phu['NAMPS'] = 4
+        ref_exth['CCDSUM'] = '1 1'
         det_kw_updates = (
             ('OVRSECS', 'BIASECS'),
             ('OVRSECP', 'BIASECP'),
             ('ARRSEC', 'CCDSEC'),
             ('ARRNAM', 'AMPNAM'),
         )
-        ref_exth['CCDSUM'] = '1 1'
     else:
         # These are TBC for NIR data:
         det_kw_updates = (

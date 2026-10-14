@@ -20,7 +20,7 @@ class AstroDataScorpio(AstroDataGemini):
                           array_section='ARRSEC',
                           dark_section='UNILSEC',
                           data_section='DATSEC',
-                          detector_name='DETECTOR',
+                          detector_name='DETID',
                           disperser='GRATING',
                           filter='FILTER',
                           read_noise='RDNOIS',
