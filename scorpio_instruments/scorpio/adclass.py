@@ -17,7 +17,7 @@ class AstroDataScorpio(AstroDataGemini):
     # from what's already defined in AstroDataGemini.
 
     __keyword_dict = dict(array_name='AMPNAM',
-                          array_section='CCDSEC',
+                          array_section='ARRSEC',
                           dark_section='UNILSEC',
                           data_section='DATSEC',
                           detector_name='DETECTOR',
@@ -233,7 +233,14 @@ class AstroDataScorpio(AstroDataGemini):
         list[str] | list[list[str]]
             Position of arrays in extension(s) using a 1-based section format.
         """
-        arrsec = self._build_section_lists(self._keyword_for('array_section'))
+        # SCORPIO has adopted GMOS keyword name for visible channels only:
+        if 'CCD' in self.tags:
+            kw = 'CCDSEC'
+        else:
+            kw = self._keyword_for('array_section')
+
+        arrsec = self._build_section_lists(kw)
+
         if self.is_single:
             return (tuple_to_section(arrsec, pretty=pretty)
                     if isinstance(arrsec, Section) else
