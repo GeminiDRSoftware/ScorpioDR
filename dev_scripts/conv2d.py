@@ -110,8 +110,9 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_exth['PIXSCALE'] = 0.18
     ref_exth['RADECSYS'] = 'FK5'
     ref_exth['RDMODE'] = 0
-    ref_exth['SATLEVEL'] = 65535
-    ref_exth['NONLINEA'] = 50000
+    if arm == 'vis':
+        ref_exth['SATLEVEL'] = 65535
+        ref_exth['NONLINEA'] = 50000
 
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
     ref_phu['EXPTREQ'] = ref_exth['INTTREQ']
@@ -150,8 +151,8 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['CENTWAVE'] = 755.0 if arm == 'vis' else 1630.0
     ref_phu['FILTER'] = 'i_G1303' if arm == 'vis' else 'H_G1307'
     ref_phu['GRATING'] = 'OUT'
-    ref_phu['LINCORR'] = 'no'
-    ref_phu['ADUTOELE'] = 'no'
+    ref_phu['LINCORR'] = 'no' if arm == 'vis' else 'yes'
+    ref_phu['ADUTOELE'] = 'no' if arm == 'vis' else 'yes'
     ref_phu['RAIL1'] = 'Full-field Stop'
     ref_phu['RAIL2'] = 'NONE'
     ref_phu['SLITSIZE'] = 'NONE'
