@@ -747,7 +747,10 @@ class AstroDataScorpio(AstroDataGemini):
         str
             read mode used
         """
-        read_mode = self.phu.get('RDMODE')
+        read_mode = self.hdr.get('RDMODE')
+        # This descriptor should return a single value for the AD instance:
+        if not self.is_single:
+            read_mode = read_mode[0] if len(set(read_mode)) == 1 else None
         if read_mode == 0:
             return 'Standard'
         elif read_mode == 1:

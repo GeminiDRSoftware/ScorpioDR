@@ -80,6 +80,8 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
         ref_phu['DETID'] = 'TBD'  # Just need it to exist for now
         ref_phu['DETTYPE'] = 'e2v_CCD231-84_astro-multi-2_dd'
         ref_phu['NAMPS'] = 4
+        ref_phu['NODMODE'] = 'no'
+        ref_exth['CCDSIZE'] = '[1:4096,1:4112]'
         ref_exth['CCDSUM'] = '1 1'
         det_kw_updates = (
             ('OVRSECS', 'BIASECS'),
@@ -103,6 +105,14 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
                     )
                 del ref_exth[oldkw]
 
+    ref_exth['DATATYPE'] = 'Intensity'
+    ref_exth['EQUINOX'] = 2000.0
+    ref_exth['PIXSCALE'] = 0.18
+    ref_exth['RADECSYS'] = 'FK5'
+    ref_exth['RDMODE'] = 0
+    ref_exth['SATLEVEL'] = 65535
+    ref_exth['NONLINEA'] = 50000
+
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
     ref_phu['EXPTREQ'] = ref_exth['INTTREQ']
 
@@ -125,11 +135,16 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['OBSMODE'] = 'IMG'
     ref_phu['OBSID'] = ref_phu['GEMPRGID'] + f'-{obsnum:04d}'
 
+    ref_phu['ADCUSED'] = 1
+    ref_phu['CENTWAVE'] = 755.0 if arm == 'vis' else 1630.0
     ref_phu['FILTER'] = 'i_G1303' if arm == 'vis' else 'H_G1307'
     ref_phu['FILTID'] = 'NONE'
     ref_phu['GRATING'] = 'OUT'
     ref_phu['GRATID'] = 'NONE'
-    ref_phu['RDMODE'] = 0
+    ref_phu['LINCORR'] = 'no'
+    ref_phu['ADUTOELE'] = 'no'
+    ref_phu['RAIL1'] = 'Full-field Stop'
+    ref_phu['RAIL2'] = 'NONE'
     ref_phu['SLITSIZE'] = 'NONE'
     ref_phu['LT'] = '22:00:00.0'
     ref_phu['OBSEPOCH'] = 2023.83
