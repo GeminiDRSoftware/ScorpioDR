@@ -68,8 +68,8 @@ class ScorpioCCD(Scorpio, CCD):
             ad = super().trimOverscan([ad], suffix=suffix)[0]
             for ext in ad:
                 with suppress(AttributeError, KeyError):
-                    del ext.hdr['OVRSECS*']
-                    del ext.hdr['OVRSECP*']
+                    del ext.hdr['BIASECS*']
+                    del ext.hdr['BIASECP*']
                     # The original DATSECn in untrimmed coords are superseded
                     # by DATSEC (the descriptor returns a single, consolidated
                     # section whether there is one keyword or four):
