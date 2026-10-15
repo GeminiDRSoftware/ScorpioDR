@@ -52,7 +52,8 @@ class Scorpio(Gemini):
         # replaced them with GAIN=1.0.
         for ad in adinputs:
             for ext in ad:
-                del ext.hdr['GAIN?']
+                if ext._keyword_for('gain') in ext.hdr:
+                    del ext.hdr['GAIN?']
 
         return adinputs
 
