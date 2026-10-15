@@ -116,7 +116,13 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['EXPTIME'] = ref_exth['INTTIME']  # split to total exp into 1 int
     ref_phu['EXPTREQ'] = ref_exth['INTTREQ']
 
-    tdelt = timedelta(seconds=ref_exth.get('INTTOTT' or 0.))
+    tdelt = timedelta(seconds=ref_exth.get('INTTOTT') or 0.)
+
+    for kw in ('INTT???', 'RDOUTSPD', 'DARKTIME', 'WAT?_001'):
+        try:
+            del ref_exth[kw]
+        except KeyError:
+            pass
 
     # The sims provided by GWU have both the wrong GEMPRGID format for GPP and
     # also identical dummy values for every exposure/integration, so add some
@@ -127,10 +133,15 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     if '_CCD' not in ref_phu['DETECTOR']:
         obsnum += 10
 
-    try:
-        del ref_phu['GEMPGRID']  # orig sims have typo
-    except KeyError:
-        pass
+    # The first of these is a typo in the original sims:
+    for kw in ('GEMPGRID', 'FILE', 'IMTYPE', 'PAR_ANG', 'CRFOLLOW', 'EXPTREQ',
+               'EXPSTART', 'WMODE', 'FILTER?', 'FILTD?', 'FILTID*', 'DICHRO?',
+               'DICHRID*', 'GRATID*', 'GRATING?', 'RDMODE'):
+        try:
+            del ref_phu[kw]
+        except KeyError:
+            pass
+
     ref_phu['GEMPRGID'] = 'G-2019B-1234-Q'
     ref_phu['OBSMODE'] = 'IMG'
     ref_phu['OBSID'] = ref_phu['GEMPRGID'] + f'-{obsnum:04d}'
@@ -138,9 +149,7 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['ADCUSED'] = 1
     ref_phu['CENTWAVE'] = 755.0 if arm == 'vis' else 1630.0
     ref_phu['FILTER'] = 'i_G1303' if arm == 'vis' else 'H_G1307'
-    ref_phu['FILTID'] = 'NONE'
     ref_phu['GRATING'] = 'OUT'
-    ref_phu['GRATID'] = 'NONE'
     ref_phu['LINCORR'] = 'no'
     ref_phu['ADUTOELE'] = 'no'
     ref_phu['RAIL1'] = 'Full-field Stop'
