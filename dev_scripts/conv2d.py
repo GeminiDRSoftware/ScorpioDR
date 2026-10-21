@@ -159,6 +159,17 @@ for expnum, (ref, dat, fn, dt) in enumerate(zip(refs, data, outfn, dts),
     ref_phu['LT'] = '22:00:00.0'
     ref_phu['OBSEPOCH'] = 2023.83
 
+    if ref_phu['OBJECT'] == 'GCALflat':
+        # Shutter already set properly to OPEN/CLOSED.
+        if arm == 'vis':
+            ref_phu['GCALLAMP'] = 'QH'
+            ref_phu['GCALFILT'] = 'ND4.0'
+            ref_phu['GCALDIFF'] = 'VISIBLE'
+        else:
+            ref_phu['GCALLAMP'] = 'IRhigh'
+            ref_phu['GCALFILT'] = 'ND4-5'
+            ref_phu['GCALDIFF'] = 'IR'
+
     sci_arr = dat['SCI'].data
     if len(sci_arr.shape) > 3:  # raw ccd
         sci_arr = sci_arr[:, 0, :, :]  # bin unit read group axis
